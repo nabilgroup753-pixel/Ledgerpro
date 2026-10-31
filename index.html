@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#6366f1">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -280,6 +280,7 @@ details ol{padding-left:20px}
 .tog{padding:2px 7px;min-width:26px;font-size:12px;margin-right:4px}
 .tog-sp{display:inline-block;width:30px}
 </style>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
 </head>
 <body class="locked">
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>

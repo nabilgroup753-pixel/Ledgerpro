@@ -1,6 +1,7 @@
 // LedgerPro service worker — app-er file gulo cache kore rakhe, jeno internet chhara-o khule
 const CACHE = 'ledgerpro-v6';
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+// Cloudflare Pages /index.html ke / e redirect kore, tai shudhu '/' cache kori
+const SHELL = ['./', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -20,6 +21,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   // Shudhu nijer site-er file cache hobe; onno site (Google etc.) jemon ache temon-i thakbe
   if (url.origin !== self.location.origin) return;
+  // (GitHub Pages-e sub-path tai relative path byabohar hoy)
 
   // Page: age network theke chesta, na holey cache
   if (req.mode === 'navigate') {
@@ -27,10 +29,10 @@ self.addEventListener('fetch', e => {
       fetch(req)
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE).then(c => c.put('/index.html', copy));
+          caches.open(CACHE).then(c => c.put('./', copy));
           return res;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match('./'))
     );
     return;
   }
