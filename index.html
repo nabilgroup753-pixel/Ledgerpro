@@ -652,6 +652,14 @@ body.ui-windows .btn{border-radius:4px!important}
       <div id="unitListBox" style="margin-top:10px"></div>
     </details>
     <div class="glass card">
+      <h3>🏠 Home screen</h3>
+      <div class="row" style="margin-top:10px"><span class="muted" style="font-size:13px">Clock format</span>
+        <div class="seg" id="clkSeg"><button data-c="12" onclick="setClock('12')">12h · AM/PM</button><button data-c="24" onclick="setClock('24')">24h</button></div></div>
+      <div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px">Wallpaper</span>
+        <input type="file" id="fileWall" accept="image/*" style="display:none"><button class="btn sm" onclick="$('fileWall').click()">ছবি বদলান</button><button class="btn g sm" onclick="clearWall()">Default</button></div>
+      <div class="muted" style="font-size:12px;margin-top:8px">Phone-এর ছবি দিলে home screen-এ wallpaper হিসেবে দেখাবে</div>
+    </div>
+    <div class="glass card">
       <div class="ch"><div><h3>UI Style</h3><div class="muted" style="font-size:12px;margin-top:4px">Font, card ও home screen-এর চেহারা বদলাবে</div></div></div>
       <div class="seg" id="uiSeg"><button data-u="pixel" onclick="setUI('pixel')">🟢 Google Pixel</button><button data-u="apple" onclick="setUI('apple')">🍎 Apple</button><button data-u="windows" onclick="setUI('windows')">🪟 Windows</button></div>
     </div>
@@ -1651,13 +1659,25 @@ function applyUI(){
   document.querySelectorAll('#uiSeg button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
   const ic = $('homeIcon');
   if (ic && S) ic.textContent = S.co.name;
+  if (S){
+    const hm = $('p-home');
+    hm.style.backgroundImage = S.co.wall ? `linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.35)),url("${S.co.wall}")` : '';
+    hm.style.backgroundSize = S.co.wall ? 'cover' : '';
+    hm.style.backgroundPosition = S.co.wall ? 'center' : '';
+    document.querySelectorAll('#clkSeg button').forEach(b => b.classList.toggle('on', b.dataset.c === (S.co.clock || '12')));
+  }
   tickHome();
 }
 function setUI(u){ if (!S) return; S.co.ui = u; save(); toast('UI বদলানো হয়েছে ✓'); }
+function setClock(c){ if (!S) return; S.co.clock = c; save(); toast(c === '24' ? '24 ঘণ্টা format চালু ✓' : '12 ঘণ্টা (AM/PM) চালু ✓'); }
+function clearWall(){ if (!S) return; S.co.wall = ''; save(); toast('Default wallpaper ✓'); }
 function tickHome(){
   const el = $('hClock'); if (!el) return;
   const d = new Date();
-  el.textContent = d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+  const twelve = !S || (S.co.clock || '12') !== '24';
+  el.textContent = twelve
+    ? d.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})
+    : d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
   $('hDate').textContent = d.toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
 }
 
@@ -2355,6 +2375,7 @@ function init(){
   $('cOb').addEventListener('blur', () => fmtAmtField($('cOb')));
   $('cOb').addEventListener('input', () => cleanAmtField($('cOb')));
   $('logo').onclick = () => go('dash');
+  $('fileWall').addEventListener('change', e => readImg(e.target.files[0], 3e6, d => { S.co.wall = d; save(); toast('Wallpaper বসানো হয়েছে ✓'); }));
   setInterval(tickHome, 1000);
   $('cParent').addEventListener('change', syncCoaForm);
   $('cGroup').addEventListener('change', () => { rebuildParents(''); syncCoaForm(); });
