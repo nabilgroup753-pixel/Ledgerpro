@@ -4,11 +4,13 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#6366f1">
 <link rel="apple-touch-icon" href="./icon-192.png">
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
 
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@200;300;400;500;700&display=swap">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com https://accounts.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://www.googleapis.com https://accounts.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>LedgerPro</title>
 <style>
@@ -278,11 +280,95 @@ details ol{padding-left:20px}
   @page{size:A4;margin:12mm}
 }
 .tog{padding:2px 7px;min-width:26px;font-size:12px;margin-right:4px}
+/* ---- APP OPEN SPLASH ---- */
+#splash{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--accent,#6366f1) 45%,#000) 0%,#05050a 75%);color:#fff;animation:spOut .7s ease 2.6s forwards;pointer-events:none}
+.sp-t{font-size:22px;font-weight:300;letter-spacing:.42em;padding-left:.42em;opacity:0;text-shadow:0 0 28px var(--accent,#6366f1);animation:spIn 1s ease .2s forwards;text-align:center}
+.sp-bar{margin-top:24px;width:140px;height:2px;background:rgba(255,255,255,.15);overflow:hidden;opacity:0;animation:spIn .6s ease .9s forwards}
+.sp-bar::after{content:'';display:block;height:100%;width:40%;background:var(--accent,#6366f1);animation:spSlide 1.3s ease-in-out infinite}
+@keyframes spIn{to{opacity:1}}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+@keyframes spSlide{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@media (prefers-reduced-motion:reduce){#splash,.sp-t,.sp-bar{animation-duration:.01s!important;animation-delay:0s!important}}
+.rwrap{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px}
+.rchip{flex:1 1 170px;min-width:170px;border-radius:16px;background:rgba(127,127,127,.09);padding:10px 14px}
+.rchip>summary,.rhead>summary{cursor:pointer;list-style:none;display:flex;flex-direction:column}
+.rchip>summary::-webkit-details-marker,.rhead>summary::-webkit-details-marker{display:none}
+.rchip>summary small{opacity:.7}
+.rchip>summary b{font-size:17px;margin-top:2px}
+.rop{align-self:center;font-size:24px;font-weight:700;opacity:.55}
+.rbody{margin-top:8px}
+.rhead{padding:6px 0;font-size:14px;border-bottom:1px solid rgba(127,127,127,.12)}
+.rhead>summary{flex-direction:row;justify-content:space-between;gap:8px}
+.rhead:not(details){display:flex;justify-content:space-between;gap:8px}
+.rsub{display:flex;justify-content:space-between;gap:8px;padding:4px 0 4px 14px;font-size:13px;opacity:.9}
+.rcheck{margin-top:10px;font-size:13px}
+details.dd>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+details.dd>summary::-webkit-details-marker{display:none}
+.chev{display:inline-block;transition:transform .2s;opacity:.7}
+details.dd[open] .chev{transform:rotate(180deg)}
+.ddbody{margin-top:14px}
+#p-settings details.dd{margin-bottom:12px}
+/* ---- HOME SCREEN ---- */
+#p-home{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:12vh 24px 10vh;text-align:center;background:var(--homebg);color:#fff;animation:none}
+#p-home.on{display:flex}
+body.is-home header.top,body.is-home #nav{display:none!important}
+.homeClock{font-size:112px;font-weight:200;letter-spacing:-4px;line-height:1;text-shadow:0 2px 24px rgba(0,0,0,.2)}
+.homeDate{margin-top:10px;font-size:20px;opacity:.9;font-weight:400}
+.homeIcon{border:0;cursor:pointer;color:#fff;background:rgba(255,255,255,.16);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:999px;padding:14px 28px;font:inherit;font-size:17px;font-weight:500;letter-spacing:.3px;max-width:86%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+body.ui-apple #p-home{--homebg:radial-gradient(circle at 20% 15%,#7dd3fc,transparent 55%),radial-gradient(circle at 85% 80%,#f0abfc,transparent 55%),linear-gradient(160deg,#1e3a8a,#312e81)}
+body.ui-windows #p-home{--homebg:linear-gradient(135deg,#0a4f9c,#0078d4 55%,#2d9cdb)}
+body.ui-windows .homeClock{font-weight:300;font-size:104px;letter-spacing:-3px}
+body.ui-windows .homeIcon{border-radius:6px;background:rgba(255,255,255,.18);box-shadow:none}
+body.ui-pixel #p-home{--homebg:radial-gradient(circle at 30% 20%,#4285f4 0%,transparent 45%),radial-gradient(circle at 78% 72%,#34a853 0%,transparent 38%),radial-gradient(circle at 62% 30%,#fbbc04 0%,transparent 30%),#111318}
+body.ui-pixel .homeClock{font-family:'Roboto',system-ui,sans-serif;font-weight:200;font-size:120px}
+body.ui-pixel .homeDate{font-weight:400}
+/* ---- UI STYLES ---- */
+body.ui-pixel{--font:'Roboto',system-ui,sans-serif}
+body.ui-pixel .glass,body.ui-pixel .card,body.ui-pixel .kpi{border-radius:28px!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;box-shadow:0 1px 3px rgba(0,0,0,.18)!important}
+body.ui-pixel .btn{border-radius:999px!important}
+body.ui-pixel h3,body.ui-pixel h4{font-weight:500}
+body.ui-apple{--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif}
+body.ui-windows{--font:'Segoe UI',Tahoma,system-ui,sans-serif}
+body.ui-windows .glass,body.ui-windows .card{border-radius:6px!important;backdrop-filter:none!important;box-shadow:0 2px 8px rgba(0,0,0,.18)!important}
+body.ui-windows .btn{border-radius:4px!important}
+.grpbox{margin-bottom:12px;border-radius:14px;background:rgba(127,127,127,.06);padding:4px 14px}
+.grpbox summary{cursor:pointer;padding:12px 0;font-size:15px;list-style:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grpbox summary::-webkit-details-marker{display:none}
+.grpbox summary::before{content:'▾';opacity:.6;margin-right:4px}
+.grpbox:not([open]) summary::before{content:'▸'}
+.grpbox .tw{margin-bottom:10px}
+.grp-tot{float:right;font-weight:700}
+.gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.pick{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.pick.hidden{display:none}
+.pick-card{width:100%;max-width:380px;padding:18px;max-height:80vh;overflow:auto}
+.sub-btn{display:block;width:100%;text-align:left;margin-bottom:8px}
+.nrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.nin{width:110px;text-align:right}
+.cashbox{margin-top:14px;padding:12px;border-radius:14px;background:rgba(127,127,127,.08)}
+.cashbox.hidden{display:none}
+.cb-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.cb-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cashsum{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.dtl-card{max-width:440px}
+.drow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(127,127,127,.15);font-size:14px}
+.drow.total{font-weight:700;border-bottom:0;margin-top:4px}
+.dh{margin:14px 0 4px;font-size:13px;opacity:.8}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px}
+.grid4{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:12px;margin-top:4px}
+.mlbox{margin-top:14px;padding:12px;border-radius:14px;background:rgba(127,127,127,.06)}
+.mlbox.hidden{display:none}
+.catrow{margin-top:4px}
+.hidden{display:none!important}
+.qline{margin:8px 0;font-size:13px}
+@media (max-width:520px){.grid3,.grid4{grid-template-columns:1fr}}
+.hidden-btn{display:none}
+@media (max-width:520px){.cb-cols{grid-template-columns:1fr}}
 .tog-sp{display:inline-block;width:30px}
 </style>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
 </head>
 <body class="locked">
+<div id="splash" aria-hidden="true"><div class="sp-t">MONIB CREATIONS</div><div class="sp-bar"></div></div>
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 <div id="bg"></div>
 
@@ -294,8 +380,9 @@ details ol{padding-left:20px}
       <h3 id="lockTitle" style="font-size:20px">LedgerPro</h3>
       <p class="muted" id="lockSub" style="font-size:13px;line-height:1.6;margin:8px 0 0"></p>
     </div>
-    <label class="fl"><span>Passphrase</span><input id="pass1" type="password" class="in" autocomplete="current-password"></label>
-    <label class="fl hidden" id="pass2Wrap"><span>Passphrase আবার লিখুন</span><input id="pass2" type="password" class="in" autocomplete="new-password"></label>
+    <label class="fl" id="uidWrap"><span>User ID</span><input id="uid1" class="in" autocomplete="username" placeholder="যেমন monib"></label>
+    <label class="fl"><span>Password</span><input id="pass1" type="password" class="in" autocomplete="current-password"></label>
+    <label class="fl hidden" id="pass2Wrap"><span>Password আবার লিখুন</span><input id="pass2" type="password" class="in" autocomplete="new-password"></label>
     <div class="hint hidden" id="setupHint">কমপক্ষে ১২ অক্ষর, অন্তত একটি অক্ষর ও একটি সংখ্যা। Passphrase কোথাও save হয় না — ভুললে data আর খোলা যাবে না।</div>
     <div class="row" style="margin-top:16px;flex-direction:column;align-items:stretch">
       <button class="btn" id="lockBtn" onclick="doLock()">Unlock</button>
@@ -333,14 +420,25 @@ details ol{padding-left:20px}
 
 <main class="wrap">
   <nav class="nav glass" id="nav">
+    <button data-go="home" onclick="go('home')">🏠 Home</button>
     <button data-go="dash" class="on" onclick="go('dash')">📊 Dashboard</button>
     <button data-go="entry" onclick="go('entry')">🧾 Voucher</button>
     <button data-go="ledger" onclick="go('ledger')">📒 Ledger</button>
+    <button data-go="cash" onclick="go('cash')">💵 Cash</button>
     <button data-go="report" onclick="go('report')">📈 Reports</button>
     <button data-go="settings" onclick="go('settings')">⚙️ Settings</button>
   </nav>
 
   <!-- DASHBOARD -->
+  <section class="page" id="p-home">
+    <div></div>
+    <div>
+      <div class="homeClock" id="hClock">--:--</div>
+      <div class="homeDate" id="hDate"></div>
+    </div>
+    <button class="homeIcon" id="homeIcon" onclick="go('dash')" title="Dashboard"></button>
+  </section>
+
   <section class="page on" id="p-dash">
     <div class="glass hero">
       <div>
@@ -369,10 +467,15 @@ details ol{padding-left:20px}
     </div>
 
     <div class="kpis">
-      <div class="glass kpi" style="--c:#f59e0b"><span class="ic">💵</span><small>Cash in Hand</small><b id="kCash">0.00</b></div>
-      <div class="glass kpi" style="--c:#6366f1"><span class="ic">🏦</span><small>Bank Balance</small><b id="kBank">0.00</b></div>
-      <div class="glass kpi" style="--c:#10b981"><span class="ic">↗</span><small>Income · <span id="kIncLbl">সময়কাল</span></small><b id="kInc">0.00</b></div>
-      <div class="glass kpi" style="--c:#f97316"><span class="ic">↘</span><small>Expense · <span id="kExpLbl">সময়কাল</span></small><b id="kExp">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('cash')" style="--c:#f59e0b;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">💵</span><small>Cash in Hand</small><b id="kCash">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('bank')" style="--c:#6366f1;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">🏦</span><small>Bank Balance</small><b id="kBank">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('inc')" style="--c:#10b981;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↗</span><small>Income · <span id="kIncLbl">সময়কাল</span></small><b id="kInc">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('exp')" style="--c:#f97316;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↘</span><small>Expense · <span id="kExpLbl">সময়কাল</span></small><b id="kExp">0.00</b></div>
+    </div>
+
+    <div class="glass card" id="ribbonCard">
+      <div class="ch"><h3>Balance equation</h3><span class="muted" style="font-size:12px">Asset = Liability + Equity + Income − Expense · নামে click করুন</span></div>
+      <div id="ribbon"></div>
     </div>
 
     <div class="g2">
@@ -441,20 +544,64 @@ details ol{padding-left:20px}
         </div>
       </div>
 
+      <div class="catrow"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
+      <div class="grid4">
+        <label class="fl"><span>Item (কী কেনা/বেচা)</span><input id="vItem" class="in" placeholder="যেমন EGG, CHAIR"></label>
+        <label class="fl"><span id="qtyLblT">Quantity (পরিমাণ)</span><input id="vQty" class="in" inputmode="decimal" placeholder="যেমন 5"><select id="vMonth" class="in hidden"></select></label>
+        <label class="fl"><span>Unit</span><select id="vUnit" class="in"></select></label>
+        <label class="fl"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
+      </div>
       <div class="grid2">
         <label class="fl"><span>Amount</span><input id="vAmt" type="text" inputmode="decimal" class="in amt" placeholder="0.00"></label>
         <label class="fl"><span>Particulars / Narration</span><input id="vNar" class="in" placeholder="বিবরণ, যেমন: BEING EGG PURCHASED"></label>
       </div>
       <div class="aw" id="awords"></div>
 
+      <div class="cashbox hidden" id="cashBox">
+        <div class="cb-head"><b>💵 Cash · note হিসাব</b><span class="pill" id="cbNet"></span></div>
+        <div class="cb-cols">
+          <div class="cb-col"><div class="lbl">হাতে এসেছে (IN)</div><div id="inGrid"></div><div class="muted" id="inTot" style="font-size:12px;margin-top:6px"></div></div>
+          <div class="cb-col"><div class="lbl">হাত থেকে গেছে (OUT / ferot)</div><div id="outGrid"></div><div class="muted" id="outTot" style="font-size:12px;margin-top:6px"></div></div>
+        </div>
+        <div class="row end" style="margin-top:8px"><button class="btn g sm" id="cbSuggest" onclick="suggestChange()">Ferot-er note suggest</button></div>
+        <div id="cbHint" style="font-size:12px;margin-top:6px"></div>
+      </div>
       <div class="preview" id="preview" style="margin-top:14px"></div>
 
+      <div class="mlbox hidden" id="mlBox">
+        <div class="ch"><h3>Multi-line voucher</h3><span class="muted" style="font-size:12px">একাধিক item/account — Debit মোট = Credit মোট হতে হবে</span></div>
+        <div class="tw"><table class="tb" id="mlTbl"></table></div>
+        <div class="row" style="margin-top:8px"><button class="btn g sm" onclick="mlAdd('dr')">＋ Debit line</button><button class="btn g sm" onclick="mlAdd('cr')">＋ Credit line</button></div>
+        <div class="cashsum" id="mlTot" style="margin:10px 0;font-size:14px"></div>
+        <div class="row end"><button class="btn" onclick="mlSave()">Multi-line Save</button></div>
+      </div>
       <div class="row end">
+        <button class="btn g" onclick="toggleML()">📋 Multi-line</button>
         <button class="btn g" onclick="clearForm()">Clear</button>
         <button class="btn" id="saveBtn" onclick="saveV()">Save Voucher</button>
       </div>
     </div>
   </section>
+
+  <!-- CASH -->
+  <section class="page" id="p-cash">
+    <div class="glass card">
+      <div class="ch"><div><h3>Cash counting</h3><div class="muted" style="font-size:12px;margin-top:4px">হাতের note গুনে নিচের ঘরে বসান। Book cash-এর সাথে মিলিয়ে দেখাবে</div></div></div>
+      <div class="tw"><table class="tb" id="cntTbl"></table></div>
+      <div class="cashsum">
+        <div>মোট গোনা: <b id="cntCounted">0</b></div>
+        <div>Book cash (CASH ledger): <b id="cntBook">0</b></div>
+        <div id="cntDiff"></div>
+      </div>
+      <div class="row end">
+        <button class="btn g" onclick="applyCount(false)">শুধু stock update</button>
+        <button class="btn" onclick="applyCount(true)">Stock update + Discount/Excess entry</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="pick hidden" id="dtl" onclick="if(event.target===this)closeDetail()"><div class="pick-card glass dtl-card"><div class="row" style="justify-content:space-between;align-items:center"><h4 id="dtlTitle" style="margin:0"></h4><button class="ib" onclick="closeDetail()" title="বন্ধ">✕</button></div><div id="dtlBody" style="margin-top:12px"></div></div></div>
+  <div class="pick hidden" id="pick" onclick="if(event.target===this)closePick()"><div class="pick-card glass"><h4 id="pickTitle" style="margin:0 0 12px"></h4><div id="pickList"></div><div class="row end" style="margin-top:10px"><button class="btn g sm" onclick="closePick()">বাতিল</button></div></div></div>
 
   <!-- LEDGER -->
   <section class="page" id="p-ledger">
@@ -499,6 +646,15 @@ details ol{padding-left:20px}
 
   <!-- SETTINGS -->
   <section class="page" id="p-settings">
+    <details class="glass card dd">
+      <summary><span><b>Unit তালিকা</b> <span class="muted" style="font-size:12px">· Voucher-এর Unit dropdown</span></span><span class="chev">▾</span></summary>
+      <div class="row"><input id="uNew" class="in" placeholder="নতুন unit (যেমন BAG)"><button class="btn sm" onclick="unitAdd()">Add</button></div>
+      <div id="unitListBox" style="margin-top:10px"></div>
+    </details>
+    <div class="glass card">
+      <div class="ch"><div><h3>UI Style</h3><div class="muted" style="font-size:12px;margin-top:4px">Font, card ও home screen-এর চেহারা বদলাবে</div></div></div>
+      <div class="seg" id="uiSeg"><button data-u="pixel" onclick="setUI('pixel')">🟢 Google Pixel</button><button data-u="apple" onclick="setUI('apple')">🍎 Apple</button><button data-u="windows" onclick="setUI('windows')">🪟 Windows</button></div>
+    </div>
     <div class="sgrid">
       <div class="glass card">
         <h3>🏢 Company &amp; Accounts</h3>
@@ -545,13 +701,14 @@ details ol{padding-left:20px}
           <select id="cType" class="in"></select>
           <select id="cSide" class="in"></select>
           <input id="cOb" type="text" inputmode="decimal" class="in amt" placeholder="Opening amount">
+          <select id="cOff" class="in hidden" title="Opening-এর বিপরীত account"></select>
         </div>
         <div class="hint" id="cHint"></div>
         <div class="row" style="margin-top:12px">
           <button class="btn" id="ledBtn" onclick="saveLed()">Add Account</button>
           <button class="btn g hidden" id="ledCancel" onclick="cancelLed()">Cancel</button>
         </div>
-        <div class="tw" style="margin-top:14px"><table class="tb" id="tCoa"></table></div>
+        <div class="tw" style="margin-top:14px"><div id="tCoa"></div></div>
       </div>
 
       <div class="glass card">
@@ -652,6 +809,7 @@ const PBKDF2_ITER = 310000;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const UID_KEY = 'LP_UID';
 const VAULT_KEY = 'LP_VAULT', FAIL_KEY = 'LP_FAIL', AUTOLOCK_KEY = 'LP_AUTOLOCK', DRIVE_OK = 'LP_DRIVE_OK', LASTBK_KEY = 'LP_LASTBK';
 const GROUPS = {Asset:'dr', Expense:'dr', Liability:'cr', Equity:'cr', Income:'cr'};
 const GORD = ['Asset','Liability','Equity','Income','Expense'];
@@ -711,7 +869,7 @@ function persist(){
 }
 function save(){ render(); persist(); }
 
-function blank(){ return {v:12, co:{name:'MY COMPANY', sub:'DAILY ACCOUNTS', cur:'৳', fy:7, theme:'auto', accent:'#6366f1', accent2:'#8b5cf6', glass:55, design:'classic', logo:'', bg:''}, ledgers:defLedgers(), vouchers:[]}; }
+function blank(){ return {v:13, vaultId: uid(), imported: [], notes: emptyNotes(), units: DEF_UNITS.slice(), co:{name:'MY COMPANY', sub:'DAILY ACCOUNTS', cur:'৳', fy:7, theme:'auto', accent:'#6366f1', accent2:'#8b5cf6', glass:55, design:'classic', logo:'', bg:''}, ledgers:defLedgers(), vouchers:[]}; }
 function defLedgers(){
   const fixed = uid();
   return [
@@ -765,8 +923,17 @@ function normalize(d){
     id: String(v.id || uid()), ref: String(v.ref || uid()).toUpperCase(),
     type: VT[v.type] ? v.type : (TMAP[v.type] || 'JV'),
     date: String(v.date || today()), nar: String(v.nar || '').toUpperCase(),
-    dr: String(v.dr), cr: String(v.cr), amt: Math.round((+v.amt || 0) * 100) / 100
+    dr: String(v.dr), cr: String(v.cr), amt: Math.round((+v.amt || 0) * 100) / 100,
+    nin: v.nin ? normNotes(v.nin) : null, nout: v.nout ? normNotes(v.nout) : null,
+    qty: +v.qty > 0 ? +v.qty : null, rate: +v.rate > 0 ? +v.rate : null, unit: v.unit ? String(v.unit).toUpperCase() : null, item: v.item ? String(v.item).toUpperCase() : null, grp: v.grp ? String(v.grp) : null, cat: v.cat ? String(v.cat) : null, month: v.month ? String(v.month) : null
   })).filter(v => ids2.has(v.dr) && ids2.has(v.cr) && v.dr !== v.cr && v.amt > 0);
+  // sub-ledger শুধু এক level: sub-ledger-এর নিচে sub-ledger থাকলে উপরের head-এ তুলে আনা
+  s.ledgers.forEach(l => { if (!l.parent) return; let p = l.parent, n = 0; while (n < 30){ const q = s.ledgers.find(x => x.id === p); if (!q || !q.parent) break; p = q.parent; n++; } l.parent = p; });
+  s.notes = normNotes(d.notes);
+  s.uid = d.uid ? String(d.uid) : null;
+  s.units = Array.isArray(d.units) && d.units.length ? [...new Set(d.units.map(u => String(u).toUpperCase().trim()).filter(Boolean))] : DEF_UNITS.slice();
+  s.vaultId = String(d.vaultId || uid());
+  s.imported = Array.isArray(d.imported) ? d.imported.map(String) : [];
   return s;
 }
 function migrateV11(o){
@@ -805,9 +972,12 @@ function showLock(mode){
   const legacy = !hasVault() && !!(localStorage.getItem('LP_V12') || localStorage.getItem('LP_V11_ALL'));
   $('lockTitle').textContent = setup ? 'LedgerPro সেটআপ' : (pendingEnv ? 'Backup পাওয়া গেছে' : 'Unlock LedgerPro');
   $('lockSub').textContent = setup
-    ? (legacy ? 'আগের data পাওয়া গেছে। নতুন passphrase দিলে সেটি encrypt হয়ে সংরক্ষিত হবে।' : 'প্রথমবার: একটি শক্তিশালী passphrase সেট করুন।')
-    : (pendingEnv ? 'এই backup-এর passphrase দিন।' : 'আপনার passphrase দিন।');
+    ? (legacy ? 'আগের data পাওয়া গেছে। নতুন User ID ও password দিলে সেটি encrypt হয়ে সংরক্ষিত হবে।' : 'প্রথমবার: একটি User ID ও শক্তিশালী password সেট করুন।')
+    : (pendingEnv ? 'এই backup-এর password দিন।' : 'আপনার User ID ও password দিন।');
   $('pass2Wrap').classList.toggle('hidden', !setup);
+  $('uidWrap').classList.toggle('hidden', !!pendingEnv);
+  if (!setup && !pendingEnv) $('uid1').value = localStorage.getItem(UID_KEY) || '';
+  else if (setup) $('uid1').value = '';
   $('setupHint').classList.toggle('hidden', !setup);
   $('lockBtn').textContent = setup ? 'Vault তৈরি করুন' : 'Unlock';
   $('lockRestore').classList.toggle('hidden', !setup);
@@ -819,20 +989,28 @@ function hideLock(){ $('lock').classList.remove('on'); document.body.classList.r
 
 async function doLock(){
   const mode = $('lock').dataset.m, p = $('pass1').value, err = $('lockErr');
+  const uidIn = ($('uid1').value || '').trim().toLowerCase();
   err.textContent = '';
   const wait = throttleLeft();
   if (wait) { err.textContent = `অনেকবার ভুল হয়েছে — ${Math.ceil(wait / 1000)} সেকেন্ড পর চেষ্টা করুন`; return; }
   try{
     if (mode === 'setup'){
-      if (!strongOK(p)) return err.textContent = 'Passphrase-এ কমপক্ষে ১২ অক্ষর, অক্ষর ও সংখ্যা দুটোই থাকতে হবে';
+      if (!/^[a-z0-9_.@-]{3,32}$/.test(uidIn)) return err.textContent = 'User ID কমপক্ষে ৩ অক্ষর (a-z, 0-9, _ . @ -)';
+      if (!strongOK(p)) return err.textContent = 'Password-এ কমপক্ষে ১২ অক্ষর, অক্ষর ও সংখ্যা দুটোই থাকতে হবে';
       if (p !== $('pass2').value) return err.textContent = 'দুটো passphrase মেলেনি';
       SALT = crypto.getRandomValues(new Uint8Array(16));
       CK = await deriveKey(p, SALT);
       S = legacyData() || blank();
+      S.uid = uidIn; localStorage.setItem(UID_KEY, uidIn);
       await persist();
       localStorage.removeItem('LP_V12'); localStorage.removeItem('LP_V11_ALL');
       toast('Vault তৈরি হয়েছে — Google Drive connect করে backup চালু করুন');
     } else {
+      const stored = localStorage.getItem(UID_KEY);
+      if (!pendingEnv && stored){
+        if (!uidIn) return err.textContent = 'User ID দিন';
+        if (uidIn !== stored){ recordFail(); return err.textContent = 'User ID ভুল'; }
+      }
       if (pendingEnv) localStorage.setItem(VAULT_KEY, pendingEnv);
       let r;
       try{ r = await openEnvelope(localStorage.getItem(VAULT_KEY), p); }
@@ -842,6 +1020,7 @@ async function doLock(){
         return err.textContent = 'Passphrase ভুল';
       }
       S = normalize(r.data); CK = r.key; SALT = r.salt; VAULT = localStorage.getItem(VAULT_KEY);
+      localStorage.setItem(UID_KEY, S.uid || uidIn || stored || '');
       pendingEnv = null; clearFail();
     }
   }catch(e){ return err.textContent = 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করুন'; }
@@ -899,10 +1078,11 @@ async function bioUnlock(){
     const key = await bioKey(bioUnB64(b.id));
     const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: bioUnB64(b.iv)}, key, bioUnB64(b.ct));
     $('pass1').value = new TextDecoder().decode(pt);
+    $('uid1').value = localStorage.getItem(UID_KEY) || '';
     await doLock();
   }catch(e){ err.textContent = 'Fingerprint মেলেনি — passphrase দিয়ে unlock করুন'; }
 }
-function unlockedUI(){ hideLock(); resetIdle(); per.anchor = today(); render(); fillSettings(); refreshDriveUI(); }
+function unlockedUI(){ hideLock(); resetIdle(); per.anchor = today(); render(); fillSettings(); refreshDriveUI(); go('home'); }
 function lockNow(msg){
   if (!CK) return;
   if (dirty && gConnected()) backupNow(true);
@@ -1054,7 +1234,7 @@ async function restoreDriveUI(){
     const env = await fetchLatestBackup();
     if (!env) return;
     if (!confirm('বর্তমান data-র জায়গায় Drive-এর সর্বশেষ backup বসবে। নিশ্চিত?')) return;
-    const p = await askSecret('এই backup-এর passphrase');
+    const p = await askSecret('এই backup-এর password');
     if (!p) return;
     await restoreEnvelope(env, p);
     toast('Restore সম্পন্ন ✓');
@@ -1247,6 +1427,8 @@ function applyTheme(){
 /* ============ NAVIGATION ============ */
 function go(p){
   if (!S) return;
+  document.body.classList.toggle('is-home', p === 'home');
+  if (p === 'home') tickHome();
   document.querySelectorAll('.page').forEach(s => s.classList.toggle('on', s.id === 'p-' + p));
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === p));
   window.scrollTo({top:0, behavior:'smooth'});
@@ -1346,14 +1528,22 @@ function clearForm(){
   editId = null;
   $('vDate').value = today(); $('vRef').value = ''; $('vAmt').value = ''; $('vNar').value = '';
   $('vDr').value = ''; $('vCr').value = ''; $('vFind').value = '';
-  syncVT(); syncMode(); updRefHint(); updPreview();
+  setNotes('in', null); setNotes('out', null);
+  $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; $('vItem').value = '';
+  $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false);
+  syncVT(); syncMode(); updRefHint(); updPreview(); updCash();
 }
 function loadV(id){
   const v = S.vouchers.find(x => x.id === id); if (!v) return;
+  if (v.grp) return toast('Multi-line voucher edit হয় না — delete করে আবার তুলুন', true);
+  if (v.unit && !S.units.includes(v.unit)){ S.units.push(v.unit); renderUnits(); }
   editId = id; formType = v.type;
   $('vDate').value = v.date; $('vRef').value = v.ref; $('vAmt').value = fmtNum(v.amt); $('vNar').value = v.nar;
   $('vDr').value = v.dr; $('vCr').value = v.cr;
-  syncVT(); syncMode(); updPreview(); go('entry');
+  setNotes('in', v.nin); setNotes('out', v.nout);
+  $('vCat').value = v.cat || 'OTHERS'; $('vMonth').value = v.month ? v.month.split(' ')[0] : ''; applyCat(false);
+  $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; $('vItem').value = v.item || '';
+  syncVT(); syncMode(); updPreview(); updCash(); go('entry');
 }
 function findV(){
   const q = $('vFind').value.trim().toLowerCase(); if (!q) return;
@@ -1373,20 +1563,394 @@ function saveV(){
   const ref = ($('vRef').value.trim().toUpperCase()) || (old ? old.ref : nextRef(type, date));
   if (S.vouchers.some(v => v.ref.toLowerCase() === ref.toLowerCase() && v.id !== editId))
     return toast('এই Voucher No. আগে থেকেই আছে', true);
+  const qty = parseAmt($('vQty').value) || 0, rate = parseAmt($('vRate').value) || 0, unit = ($('vUnit').value || '').trim().toUpperCase() || null;
+  const item = ($('vItem').value || '').trim().toUpperCase() || null;
+  const cat = $('vCat').value || 'OTHERS', sb = cat !== 'OTHERS';
+  const month = sb ? ($('vMonth').value ? $('vMonth').value + ' ' + date.slice(0, 4) : null) : null;
+  if (sb && !month) return toast('Month বাছুন', true);
+  // Cash voucher হলে note-এর হিসাব entry-র সাথে মিলতে হবে, আর stock আপডেট হবে
+  const cs = cashSel(); let nin = null, nout = null;
+  if (cs){
+    nin = readNotes('in'); nout = readNotes('out');
+    if (noteCount(nin) + noteCount(nout) === 0) return toast('Cash entry-র জন্য note-এর হিসাব দিন', true);
+    const net = noteTotal(nin) - noteTotal(nout), need = cs === 'dr' ? amt : -amt;
+    if (Math.abs(net - need) > 0.005) return toast('Note-এর হিসাব entry-র সাথে মিলছে না', true);
+  }
+  const st = {...S.notes};
+  if (old && old.nin) DENOMS.forEach(d => { st[d] -= (old.nin[d] || 0) - (old.nout[d] || 0); });
+  if (nin) DENOMS.forEach(d => { st[d] += nin[d] - nout[d]; });
+  const low = DENOMS.find(d => st[d] < 0);
+  if (low !== undefined) return toast(`Stock-এ ৳${low} note যথেষ্ট নেই`, true);
+  S.notes = st;
   if (old){
-    Object.assign(old, {type, date, dr, cr, amt, nar, ref});
+    Object.assign(old, {type, date, dr, cr, amt, nar, ref, nin, nout, qty: qty > 0 ? qty : null, rate: rate > 0 ? rate : null, unit, item, cat: sb ? cat : null, month});
     toast('Voucher updated ✓');
     clearForm();
   } else {
-    S.vouchers.unshift({id:uid(), type, date, dr, cr, amt, nar, ref});
+    S.vouchers.unshift({id:uid(), type, date, dr, cr, amt, nar, ref, nin, nout, qty: qty > 0 ? qty : null, rate: rate > 0 ? rate : null, unit, item, cat: sb ? cat : null, month});
     toast('Voucher saved ✓');
-    $('vAmt').value = ''; $('vNar').value = ''; $('vRef').value = '';
+    $('vAmt').value = ''; $('vNar').value = ''; $('vRef').value = ''; $('vItem').value = ''; $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; setNotes('in', null); setNotes('out', null); updCash();
   }
   save();
 }
 
+/* ============ ENTRY TYPE: OTHERS / SALARY / BONUS ============ */
+const MON3 = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+// fresh=true: নতুন করে বাছলে item/month-এর ডিফল্ট বসবে; false: edit/clear-এর সময়
+function applyCat(fresh){
+  const c = $('vCat').value || 'OTHERS', sb = c !== 'OTHERS';
+  $('vQty').classList.toggle('hidden', sb);
+  $('vMonth').classList.toggle('hidden', !sb);
+  $('qtyLblT').textContent = sb ? 'Month (কোন মাসের)' : 'Quantity (পরিমাণ)';
+  $('rateLblT').textContent = c === 'SALARY' ? 'Salary (টাকা)' : c === 'BONUS' ? 'Bonus (টাকা)' : 'Rate (প্রতি একক দর)';
+  if (sb){
+    $('vQty').value = '1';
+    $('vUnit').innerHTML = '<option value="1">1</option>'; $('vUnit').value = '1'; $('vUnit').disabled = true;
+    if (fresh){
+      $('vItem').value = c;
+      const m = +((($('vDate').value || today()).slice(5, 7))) - 1;
+      $('vMonth').value = MON3[m] || MON3[0];
+    }
+  } else {
+    $('vUnit').disabled = false;
+    if (fresh && ($('vItem').value === 'SALARY' || $('vItem').value === 'BONUS')) $('vItem').value = '';
+    renderUnits();
+  }
+  updPreview(); updCash();
+}
+
+/* ============ BALANCE EQUATION RIBBON ============ */
+function renderRibbon(){
+  const el = $('ribbon'); if (!el || !S) return;
+  const B = bals(null), items = flatTree();
+  const open = new Set([...el.querySelectorAll('details[open]')].map(d => d.dataset.k));
+  const val = (g, id) => GROUPS[g] === 'dr' ? rollB(id, B) : -rollB(id, B);
+  const gTot = g => items.filter(x => x.l.group === g && !x.l.parent).reduce((s, x) => s + val(g, x.l.id), 0);
+  const chip = (g, op) => {
+    const heads = items.filter(x => x.l.group === g && !x.l.parent);
+    const body = heads.map(({l}) => {
+      const ks = kids(l.id), hv = val(g, l.id);
+      if (!ks.length) return `<div class="rhead"><span>${esc(l.name)}</span><b>${money(hv)}</b></div>`;
+      const subs = ks.map(k => `<div class="rsub"><span>↳ ${esc(k.name)}</span><b>${money(val(g, k.id))}</b></div>`).join('');
+      return `<details class="rhead" data-k="h:${l.id}" ${open.has('h:' + l.id) ? 'open' : ''}><summary><span>${esc(l.name)}</span><b>${money(hv)}</b></summary>${subs}</details>`;
+    }).join('') || '<div class="muted" style="font-size:13px;padding:6px 0">এই group-এ head নেই</div>';
+    const v = gTot(g);
+    return `${op ? `<span class="rop">${op}</span>` : ''}<details class="rchip" data-k="g:${g}" ${open.has('g:' + g) ? 'open' : ''}><summary><small>${g} · ${GBN[g]}</small><b>${money(v)}</b></summary><div class="rbody">${body}</div></details>`;
+  };
+  const A = gTot('Asset'), Lb = gTot('Liability'), E = gTot('Equity'), I = gTot('Income'), X = gTot('Expense');
+  const diff = A - (Lb + E + I - X);
+  el.innerHTML = `<div class="rwrap">${chip('Asset', '')}${chip('Liability', '=')}${chip('Equity', '+')}${chip('Income', '+')}${chip('Expense', '−')}</div>`
+    + `<div class="rcheck">${Math.abs(diff) < 0.005 ? '<span class="ok">✓ সমীকরণ মিলেছে</span>' : `<span style="color:#ef4444">⚠ মিলছে না: ${money(diff)}</span>`}</div>`;
+}
+
+/* ============ UI STYLE + HOME ============ */
+const UI_LIST = ['pixel', 'apple', 'windows'];
+function applyUI(){
+  const u = (S && S.co.ui) || 'apple';
+  UI_LIST.forEach(x => document.body.classList.toggle('ui-' + x, x === u));
+  document.querySelectorAll('#uiSeg button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
+  const ic = $('homeIcon');
+  if (ic && S) ic.textContent = S.co.name;
+  tickHome();
+}
+function setUI(u){ if (!S) return; S.co.ui = u; save(); toast('UI বদলানো হয়েছে ✓'); }
+function tickHome(){
+  const el = $('hClock'); if (!el) return;
+  const d = new Date();
+  el.textContent = d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+  $('hDate').textContent = d.toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
+}
+
+/* ============ UNITS ============ */
+const DEF_UNITS = ['PCS', 'PLATE', 'KG', 'GRAM', 'LITRE', 'PERSON', 'DOZEN', 'PACKET', 'BOTTLE', 'BOX'];
+function renderUnits(){
+  if (!S || !$('unitListBox')) return;
+  $('unitListBox').innerHTML = S.units.map((u, i) => `<div class="drow"><span>${esc(u)}</span><span class="uact"><button class="btn g sm" onclick="unitRename(${i})">Edit</button> <button class="btn bad sm" onclick="unitDel(${i})">Delete</button></span></div>`).join('')
+    || '<div class="muted" style="font-size:13px">কোনো unit নেই</div>';
+  if (($('vCat').value || 'OTHERS') !== 'OTHERS') return;
+  const cur = $('vUnit').value;
+  fillSel($('vUnit'), [{v: '', t: '— Unit বাছুন'}].concat(S.units.map(u => ({v: u, t: u}))));
+  if (cur && S.units.includes(cur)) $('vUnit').value = cur;
+}
+function unitAdd(){
+  const u = ($('uNew').value || '').trim().toUpperCase();
+  if (!u) return toast('Unit-এর নাম দিন', true);
+  if (S.units.includes(u)) return toast('এই unit আগে থেকেই আছে', true);
+  S.units.push(u); $('uNew').value = ''; save(); toast('Unit যোগ হয়েছে ✓');
+}
+function unitRename(i){
+  const old = S.units[i];
+  const nu = (prompt('Unit-এর নতুন নাম', old) || '').trim().toUpperCase();
+  if (!nu || nu === old) return;
+  if (S.units.includes(nu)) return toast('এই নামে unit আছে', true);
+  S.units[i] = nu;
+  S.vouchers.forEach(v => { if (v.unit === old) v.unit = nu; });
+  save(); toast('Unit বদলানো হয়েছে ✓ (আগের voucher-গুলোতেও)');
+}
+function unitDel(i){
+  const u = S.units[i];
+  if (S.vouchers.some(v => v.unit === u)) return toast(`"${u}" unit-এ voucher আছে — আগে ওই voucher বদলান`, true);
+  if (!confirm(`"${u}" unit মুছবেন?`)) return;
+  S.units.splice(i, 1); save(); toast('Unit মুছে গেছে');
+}
+
+/* ============ MULTI-LINE VOUCHER ============ */
+let mlK = 0;
+function toggleML(){
+  const box = $('mlBox'); box.classList.toggle('hidden');
+  if (!box.classList.contains('hidden') && !$('mlTbl').dataset.built){ mlAdd('dr'); mlAdd('cr'); }
+}
+function mlAdd(side){
+  const k = ++mlK, tb = $('mlTbl');
+  if (!tb.dataset.built){
+    tb.dataset.built = '1';
+    tb.innerHTML = `<thead><tr><th>Dr/Cr</th><th>Account</th><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th><th></th></tr></thead><tbody></tbody>`;
+  }
+  const opts = ledOpts('— account বাছুন').map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+  const tr = document.createElement('tr');
+  tr.dataset.k = k;
+  tr.innerHTML = `<td><select id="ml_side_${k}" class="in" onchange="mlTot()"><option value="dr"${side === 'cr' ? '' : ' selected'}>Dr</option><option value="cr"${side === 'cr' ? ' selected' : ''}>Cr</option></select></td>
+    <td><select id="ml_led_${k}" class="in" onchange="maybePick('ml_led_${k}');mlTot()">${opts}</select></td>
+    <td><input id="ml_item_${k}" class="in" placeholder="Item"></td>
+    <td><input id="ml_qty_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
+    <td><input id="ml_rate_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
+    <td><input id="ml_amt_${k}" class="in nin" inputmode="decimal" oninput="mlTot()"></td>
+    <td><button class="btn bad sm" onclick="mlDel(${k})">✕</button></td>`;
+  tb.querySelector('tbody').appendChild(tr);
+  mlTot();
+}
+function mlDel(k){ const tr = document.querySelector(`#mlTbl tr[data-k="${k}"]`); if (tr) tr.remove(); mlTot(); }
+function mlRowAmt(k){
+  const q = parseAmt($('ml_qty_' + k).value), r = parseAmt($('ml_rate_' + k).value);
+  if (q > 0 && r > 0) $('ml_amt_' + k).value = fmtNum(Math.round(q * r * 100) / 100);
+  mlTot();
+}
+function mlRead(){
+  return [...document.querySelectorAll('#mlTbl tbody tr')].map(tr => {
+    const k = tr.dataset.k;
+    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: ($('ml_item_' + k).value || '').trim().toUpperCase(),
+      amt: Math.round((parseAmt($('ml_amt_' + k).value) || 0) * 100) / 100};
+  });
+}
+function mlTot(){
+  const L = mlRead().filter(l => l.led || l.amt > 0);
+  const d = L.filter(l => l.side === 'dr').reduce((s, l) => s + l.amt, 0), c = L.filter(l => l.side === 'cr').reduce((s, l) => s + l.amt, 0);
+  $('mlTot').innerHTML = `Debit ${money(d)} · Credit ${money(c)} · ` + (Math.abs(d - c) < 0.005 ? '<span class="ok">✓ মিলেছে</span>' : `<span style="color:#ef4444">Diff ${money(Math.abs(d - c))}</span>`);
+}
+function mlSave(){
+  const date = $('vDate').value; if (!date) return toast('তারিখ দিন', true);
+  const L = mlRead().filter(l => l.led || l.amt > 0);
+  if (L.length < 2) return toast('কমপক্ষে দুটি line দিন', true);
+  if (L.some(l => !l.led)) return toast('প্রতি line-এর account বাছুন', true);
+  if (L.some(l => !(l.amt > 0))) return toast('প্রতি line-এর amount দিন', true);
+  if (L.some(l => isCashL(l.led))) return toast('Multi-line-এ cash account চলে না — cash entry আলাদা করে দিন', true);
+  const D = L.filter(l => l.side === 'dr').map(l => ({...l, left: Math.round(l.amt * 100)}));
+  const C = L.filter(l => l.side === 'cr').map(l => ({...l, left: Math.round(l.amt * 100)}));
+  if (!D.length || !C.length) return toast('Debit ও Credit দুটোতেই line লাগবে', true);
+  const dT = D.reduce((s, l) => s + l.left, 0), cT = C.reduce((s, l) => s + l.left, 0);
+  if (dT !== cT) return toast(`Debit ও Credit মেলেনি (${money(dT / 100)} ≠ ${money(cT / 100)})`, true);
+  const ref = ($('vRef').value.trim().toUpperCase()) || nextRef('JV', date);
+  if (S.vouchers.some(v => v.ref.toLowerCase() === ref.toLowerCase())) return toast('এই Voucher No. আগে থেকেই আছে', true);
+  const nar = ($('vNar').value.trim().toUpperCase()) || 'MULTI-LINE ENTRY';
+  const grp = uid(), posts = [];
+  let i = 0, j = 0;
+  // Debit ও Credit line-কে মিলিয়ে একাধিক posting বানানো (প্রতিটি posting ledger-এ ঠিকভাবে যাবে)
+  while (i < D.length && j < C.length){
+    const x = Math.min(D[i].left, C[j].left);
+    posts.push({id: uid(), type: 'JV', date, dr: D[i].led, cr: C[j].led, amt: x / 100, nar, ref, grp, item: D[i].item || C[j].item || null});
+    D[i].left -= x; C[j].left -= x;
+    if (D[i].left === 0) i++;
+    if (C[j].left === 0) j++;
+  }
+  S.vouchers.unshift(...posts);
+  $('mlTbl').querySelector('tbody').innerHTML = ''; mlK = 0;
+  $('mlTbl').dataset.built = '';
+  $('mlBox').classList.add('hidden');
+  save();
+  toast(`Multi-line voucher saved ✓ (${posts.length} টি entry)`);
+}
+function vGroupHTML(v){
+  const rows = S.vouchers.filter(x => x.grp === v.grp);
+  const tot = rows.reduce((s, x) => s + x.amt, 0);
+  return `<div class="vp ${S.co.design}">
+    <div class="vh"><div><div class="vco">${esc(S.co.name)}</div><div class="vtt">Multi-line Voucher</div><div class="vs">${esc(S.co.sub)}</div></div>
+      <div class="vr"><div class="vref2">${esc(v.ref)}</div><div>Date: ${esc(v.date)}</div></div></div>
+    <table class="vt">
+      <thead><tr><th>Debit (Dr)</th><th>Credit (Cr)</th><th>Item</th><th class="num">Amount</th></tr></thead>
+      <tbody>${rows.map(x => `<tr><td>${esc(fullName(x.dr))}</td><td>${esc(fullName(x.cr))}</td><td>${esc(x.item || '')}</td><td class="num">${money(x.amt)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="3"><b>মোট</b></td><td class="num"><b>${money(tot)}</b></td></tr></tfoot>
+    </table>
+    <div class="aw"><b>Amount in words:</b> ${esc(amountWords(tot))}</div>
+    <div class="sig"><span>Prepared by</span><span>Checked by</span><span>Authorised by</span></div>
+  </div>`;
+}
+
+/* ============ QUANTITY × RATE ============ */
+// Qty × Rate বসালে Amount নিজে হবে; Amount দিলে Rate নিজে হবে (Qty থাকলে)
+function syncFromQR(){
+  const q = parseAmt($('vQty').value), r = parseAmt($('vRate').value);
+  if (q > 0 && r > 0){ $('vAmt').value = fmtNum(Math.round(q * r * 100) / 100); updPreview(); updCash(); }
+}
+function syncFromAmt(){
+  const q = parseAmt($('vQty').value), a = parseAmt($('vAmt').value);
+  if (q > 0 && a > 0) $('vRate').value = fmtNum(Math.round(a / q * 100) / 100);
+}
+
+/* ============ CASH / NOTE HISAB ============ */
+const DENOMS = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+function normNotes(o){ const r = {}; DENOMS.forEach(d => { r[d] = Math.max(0, Math.floor(+(o && o[d]) || 0)); }); return r; }
+const emptyNotes = () => normNotes(null);
+const noteTotal = o => DENOMS.reduce((s, d) => s + d * ((o && o[d]) || 0), 0);
+const noteCount = o => DENOMS.reduce((s, d) => s + ((o && o[d]) || 0), 0);
+function readNotes(pref){ const o = {}; DENOMS.forEach(d => { o[d] = +(String($(pref + '_' + d).value || '').replace(/[^0-9]/g, '')) || 0; }); return o; }
+function setNotes(pref, o){ DENOMS.forEach(d => { $(pref + '_' + d).value = (o && o[d]) ? o[d] : ''; }); }
+const isCashL = id => { const l = id ? L(id) : null; return !!l && l.type === 'cash'; };
+const cashSel = () => isCashL($('vDr').value) ? 'dr' : (isCashL($('vCr').value) ? 'cr' : null);
+const buildNoteGrid = pref => DENOMS.map(d => `<label class="nrow"><span>৳${d}</span><input id="${pref}_${d}" class="in nin" inputmode="numeric" placeholder="0" oninput="updCash()"></label>`).join('');
+function updCash(){
+  const sel = cashSel(), box = $('cashBox');
+  box.classList.toggle('hidden', !sel);
+  if (!sel) return;
+  const a = parseAmt($('vAmt').value), i = readNotes('in'), o = readNotes('out');
+  const inT = noteTotal(i), outT = noteTotal(o), net = inT - outT, need = sel === 'dr' ? a : -a;
+  $('inTot').textContent = 'মোট ' + money(inT);
+  $('outTot').textContent = 'মোট ' + money(outT);
+  $('cbNet').textContent = 'Net ' + (net < 0 ? '−' : '+') + money(Math.abs(net));
+  $('cbHint').innerHTML = !(a > 0) ? 'উপরে Amount দিন'
+    : Math.abs(net - need) < 0.005 ? '<span class="ok">✓ Note-এর হিসাব entry-র সাথে মিলেছে</span>'
+    : `<span style="color:#ef4444">Note mismatch: entry ${money(a)} লাগবে, note-এর net ${money(Math.abs(net))}</span>`;
+  $('cbSuggest').classList.toggle('hidden', sel !== 'dr');
+}
+// Customer note বেশি দিলে ferot-এর note stock থেকে suggest করা (বড় note আগে)
+function suggestChange(){
+  const a = parseAmt($('vAmt').value), i = readNotes('in');
+  const change = noteTotal(i) - a;
+  if (!(a > 0)) return toast('আগে Amount দিন', true);
+  if (change <= 0) return toast('ফেরত দেওয়ার মতো বেশি টাকা নেই', true);
+  const avail = {}; DENOMS.forEach(d => { avail[d] = (S.notes[d] || 0) + (i[d] || 0); });
+  const pick = emptyNotes(); let rem = change;
+  DENOMS.forEach(d => { const take = Math.min(avail[d], Math.floor(rem / d)); pick[d] = take; rem -= take * d; });
+  if (rem > 0.005) return toast('Stock-এ ferot-এর জন্য সঠিক note নেই', true);
+  setNotes('out', pick); updCash(); toast('Ferot-এর note suggest করা হয়েছে');
+}
+let pickFor = null;
+function maybePick(which){
+  const id = $(which).value; if (!id) return;
+  const ks = kids(id); if (!ks.length) return;
+  pickFor = which;
+  $('pickTitle').textContent = fullName(id) + ' — কোন sub-ledger?';
+  $('pickList').innerHTML = `<button class="btn sub-btn" onclick="choosePick('${id}')">✓ ${esc(fullName(id))} (head-ই রাখুন)</button>` +
+    ks.map(k => `<button class="btn g sub-btn" onclick="choosePick('${k.id}')">↳ ${esc(k.name)}</button>`).join('');
+  $('pick').classList.remove('hidden');
+}
+function choosePick(id){ if (pickFor) $(pickFor).value = id; closePick(); updPreview(); updCash(); }
+function closePick(){ $('pick').classList.add('hidden'); pickFor = null; }
+
+function bookCashTotal(){ const B = bals(null); return S.ledgers.filter(l => l.type === 'cash').reduce((s, l) => s + (B[l.id] || 0), 0); }
+function readCount(){ const c = {}; DENOMS.forEach(d => { c[d] = +(String($('cn_' + d).value || '').replace(/[^0-9]/g, '')) || 0; }); return c; }
+function renderCash(){
+  const tb = $('cntTbl'); if (!S || !tb) return;
+  if (!tb.dataset.built){
+    tb.dataset.built = '1';
+    tb.innerHTML = `<thead><tr><th>Note</th><th class="num">Stock-এ আছে (টি)</th><th class="num">এখন গুনলাম (টি)</th></tr></thead><tbody>` +
+      DENOMS.map(d => `<tr><td>৳${d}</td><td class="num" id="st_${d}"></td><td class="num"><input id="cn_${d}" class="in nin" inputmode="numeric" placeholder="0" oninput="updCountSum()"></td></tr>`).join('') +
+      `</tbody><tfoot><tr><td><b>মোট টাকা</b></td><td class="num"><b id="stTot"></b></td><td></td></tr></tfoot>`;
+  }
+  DENOMS.forEach(d => { $('st_' + d).textContent = S.notes[d] || 0; });
+  $('stTot').textContent = money(noteTotal(S.notes));
+  updCountSum();
+}
+function updCountSum(){
+  const counted = noteTotal(readCount()), book = bookCashTotal(), diff = counted - book;
+  $('cntCounted').textContent = money(counted);
+  $('cntBook').textContent = money(book);
+  $('cntDiff').innerHTML = Math.abs(diff) < 0.005 ? '<span class="ok">✓ Cash মিলে গেছে</span>'
+    : diff < 0 ? `<span style="color:#ef4444">Short / Discount: ${money(-diff)}</span>`
+    : `<span class="ok">Excess: ${money(diff)}</span>`;
+}
+function applyCount(withEntry){
+  if (!S) return;
+  const c = readCount(), diff = noteTotal(c) - bookCashTotal();
+  const hasDiff = Math.abs(diff) >= 0.005;
+  S.notes = c;
+  if (withEntry && hasDiff){
+    const main = S.ledgers.find(l => l.type === 'cash' && !kids(l.id).length) || S.ledgers.find(l => l.type === 'cash');
+    if (!main) return toast('Cash ledger পাওয়া যায়নি', true);
+    const short = diff < 0, name = short ? 'CASH SHORT / DISCOUNT' : 'CASH EXCESS';
+    let other = S.ledgers.find(l => l.name === name && !l.parent);
+    if (!other){ other = {id: uid(), name, parent: null, group: short ? 'Expense' : 'Income', type: 'general', ob: {side: short ? 'dr' : 'cr', amt: 0}}; S.ledgers.push(other); }
+    const d = today();
+    S.vouchers.unshift({id: uid(), type: 'JV', date: d, dr: short ? other.id : main.id, cr: short ? main.id : other.id,
+      amt: Math.round(Math.abs(diff) * 100) / 100, nar: short ? 'CASH SHORT — NOTE COUNT' : 'CASH EXCESS — NOTE COUNT', ref: nextRef('JV', d)});
+  }
+  save();
+  toast(withEntry && hasDiff ? 'Stock update ও entry হয়েছে ✓' : 'Stock update হয়েছে ✓');
+}
+
+// Backup import: বর্তমান data-র সাথে merge। Same account নাম একবার, voucher id একবার, note-stock একবার যোগ হয়
+function mergeInto(src){
+  const d = normalize(src);
+  const byName = new Map(S.ledgers.map(l => [l.name, l]));
+  const idMap = {}; let nl = 0, nv = 0;
+  [...d.ledgers.filter(l => !l.parent), ...d.ledgers.filter(l => l.parent)].forEach(l => {
+    const ex = byName.get(l.name);
+    if (ex){ idMap[l.id] = ex.id; return; }
+    const rec = {...l, id: uid(), parent: l.parent ? (idMap[l.parent] || null) : null};
+    idMap[l.id] = rec.id; S.ledgers.push(rec); byName.set(l.name, rec); nl++;
+  });
+  const ids = new Set(S.vouchers.map(v => v.id));
+  const refs = new Set(S.vouchers.map(v => v.ref.toLowerCase()));
+  d.vouchers.forEach(v => {
+    if (ids.has(v.id)) return;
+    const dr = idMap[v.dr], cr = idMap[v.cr]; if (!dr || !cr || dr === cr) return;
+    let ref = v.ref; while (refs.has(ref.toLowerCase())) ref += '-M';
+    refs.add(ref.toLowerCase()); ids.add(v.id);
+    S.vouchers.push({...v, dr, cr, ref}); nv++;
+  });
+  S.vouchers.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const key = src.vaultId || 'legacy';
+  if (key !== S.vaultId && !S.imported.includes(key)){
+    DENOMS.forEach(k => { S.notes[k] = (S.notes[k] || 0) + (d.notes[k] || 0); });
+    S.imported.push(key);
+  }
+  return {l: nl, v: nv};
+}
+
+/* ============ DASHBOARD DETAIL ============ */
+function openDetail(k){
+  if (!S) return;
+  const B = bals(null), P = periodOf(per.kind, per.anchor);
+  let title = '', html = '';
+  if (k === 'cash'){
+    title = '💵 Cash বিস্তারিত';
+    const rows = DENOMS.map(d => `<div class="drow"><span>৳${d} × ${S.notes[d] || 0}</span><b>${money(d * (S.notes[d] || 0))}</b></div>`).join('');
+    const cashL = flatTree().filter(({l}) => l.type === 'cash').map(({l, depth}) => `<div class="drow" style="padding-left:${depth * 14}px"><span>${esc(l.name)}</span><b>${money(rollB(l.id, B))}</b></div>`).join('') || '<div class="muted">কোনো cash account নেই</div>';
+    html = `<h4 class="dh">Note stock</h4>${rows}<div class="drow total"><span>মোট note</span><b>${money(noteTotal(S.notes))}</b></div>`
+      + `<h4 class="dh">Cash account (book)</h4>${cashL}`
+      + `<div class="muted" style="font-size:12px;margin-top:10px">Note ও book না মিললে Cash page-এ গিয়ে count করুন।</div>`;
+  } else if (k === 'bank'){
+    title = '🏦 Bank বিস্তারিত';
+    const rows = flatTree().filter(({l}) => l.type === 'bank').map(({l, depth}) => `<div class="drow" style="padding-left:${depth * 14}px"><span>${depth ? '↳ ' : ''}${esc(l.name)}</span><b>${money(rollB(l.id, B))}</b></div>`).join('');
+    html = (rows || '<div class="muted">কোনো bank account নেই। COA-তে Type “Bank” দিয়ে account যোগ করুন।</div>')
+      + `<div class="drow total"><span>মোট bank</span><b>${money(sumType('bank', B))}</b></div>`;
+  } else {
+    const g = k === 'inc' ? 'Income' : 'Expense';
+    title = (g === 'Income' ? '↗ Income' : '↘ Expense') + ' · ' + P.label;
+    const m = netIn(P.from, P.to);
+    const rows = treeOf(g).map(({l, depth}) => ({l, depth, v: GROUPS[g] === 'dr' ? rollM(l.id, m) : -rollM(l.id, m)})).filter(r => Math.abs(r.v) > 0.004);
+    html = rows.map(r => `<div class="drow" style="padding-left:${r.depth * 14}px"><span>${r.depth ? '↳ ' : ''}${esc(r.l.name)}</span><b>${money(r.v)}</b></div>`).join('')
+      || '<div class="muted">এই সময়ে কোনো entry নেই</div>';
+    const tot = rows.filter(r => r.depth === 0).reduce((s, r) => s + r.v, 0);
+    html += `<div class="drow total"><span>মোট</span><b>${money(tot)}</b></div>`;
+  }
+  $('dtlTitle').textContent = title; $('dtlBody').innerHTML = html;
+  $('dtl').classList.remove('hidden');
+}
+function closeDetail(){ $('dtl').classList.add('hidden'); }
+
 /* ============ VOUCHER SHEET ============ */
 function vHTML(v){
+  if (v.grp) return vGroupHTML(v);
   return `<div class="vp ${S.co.design}">
     <div class="vh">
       <div><div class="vco">${esc(S.co.name)}</div><div class="vtt">${esc(VT[v.type])}</div><div class="vs">${esc(S.co.sub)}</div></div>
@@ -1400,6 +1964,7 @@ function vHTML(v){
       <thead><tr><th>Particulars / বিবরণ</th><th class="num">Amount</th></tr></thead>
       <tbody><tr><td>${esc(v.nar)}</td><td class="num"><b>${money(v.amt)}</b></td></tr></tbody>
     </table>
+    ${v.month ? `<div class="qline"><b>${esc(v.cat)}:</b> ${esc(v.month)} = ${money(v.amt)}</div>` : v.qty ? `<div class="qline"><b>Qty:</b> ${esc(fmtNum(v.qty))} ${esc(v.unit || '')} × Rate ${esc(fmtNum(v.rate || 0))} = ${money(v.amt)}</div>` : ''}
     <div class="aw"><b>Amount in words:</b> ${esc(amountWords(v.amt))}</div>
     <div class="sig"><span>Prepared by</span><span>Checked by</span><span>Authorised by</span></div>
   </div>`;
@@ -1413,7 +1978,8 @@ function editFromSheet(){ const id = sheetId; closeSheet(); loadV(id); }
 function deleteFromSheet(){
   const id = sheetId, v = S.vouchers.find(x => x.id === id); if (!v) return;
   if (!confirm(`${v.ref} delete করবেন?`)) return;
-  S.vouchers = S.vouchers.filter(x => x.id !== id);
+  if (v.nin){ const st = {...S.notes}; DENOMS.forEach(d => { st[d] -= (v.nin[d] || 0) - (v.nout[d] || 0); }); S.notes = st; }
+  S.vouchers = S.vouchers.filter(x => v.grp ? x.grp !== v.grp : x.id !== id);
   closeSheet(); save(); toast('Voucher deleted');
 }
 function printVoucher(){ printHTML(`<div class="pv-wrap">${$('sheetBody').innerHTML}</div>`); }
@@ -1530,38 +2096,71 @@ function printReport(){
 
 /* ============ CHART OF ACCOUNTS ============ */
 function renderCOA(){
-  const B = bals(null);
-  let skipDepth = null; // hide descendants of a collapsed head
-  const rows = [];
-  flatTree().forEach(({l, depth}) => {
-    if (skipDepth !== null && depth > skipDepth) return;
-    skipDepth = null;
-    const n = kids(l.id).length;
-    if (n && COLL.has(l.id)) skipDepth = depth;
-    const tog = n
-      ? `<button class="btn g sm tog" onclick="toggleColl('${l.id}')" title="${COLL.has(l.id) ? 'Expand' : 'Collapse'}">${COLL.has(l.id) ? '▸' : '▾'}</button> `
-      : '<span class="tog-sp"></span> ';
-    rows.push(`<tr><td style="padding-left:${10 + depth * 22}px">${tog}${depth ? '<span class="muted">↳</span> ' : ''}<b>${esc(l.name)}</b>${n ? `<span class="pill sub">${n} sub</span>` : ''}</td>
-      <td><span class="pill" style="background:${GCOL[l.group]}22;color:${GCOL[l.group]}">${l.group} · ${GBN[l.group]}</span></td>
+  const B = bals(null), items = flatTree();
+  const thead = `<thead><tr><th>Account</th><th>Head</th><th>Type</th><th class="num">Opening</th><th class="num">Current (সহ sub)</th><th></th></tr></thead>`;
+  $('tCoa').innerHTML = GORD.map(g => {
+    const sub = items.filter(x => x.l.group === g);
+    const tot = sub.filter(x => !x.l.parent).reduce((s, x) => s + rollB(x.l.id, B), 0);
+    let rows = '', skipDepth = null;
+    sub.forEach(({l, depth}) => {
+      if (skipDepth !== null && depth > skipDepth) return;
+      skipDepth = null;
+      const n = kids(l.id).length;
+      if (n && COLL.has(l.id)) skipDepth = depth;
+      const tog = n
+        ? `<button class="btn g sm tog" onclick="toggleColl('${l.id}')" title="${COLL.has(l.id) ? 'Expand' : 'Collapse'}">${COLL.has(l.id) ? '▸' : '▾'}</button> `
+        : '<span class="tog-sp"></span> ';
+      rows += `<tr><td style="padding-left:${10 + depth * 22}px">${tog}${depth ? '<span class="muted">↳</span> ' : ''}<b>${esc(l.name)}</b>${n ? `<span class="pill sub">${n} sub</span>` : ''}</td>
       <td class="muted">${LTYPE[l.type]}</td>
       <td class="num">${fmtDC(openOf(l))}</td>
       <td class="num">${fmtDC(rollB(l.id, B))}</td>
-      <td style="white-space:nowrap;text-align:right"><button class="btn g sm" onclick="startSub('${l.id}')" title="এই head-এর নিচে sub-ledger যোগ করুন">＋ Sub-ledger</button> <button class="btn g sm" onclick="startLed('${l.id}')">Edit</button> <button class="btn bad sm" onclick="delLed('${l.id}')">Delete</button></td></tr>`);
-  });
-  $('tCoa').innerHTML = `<thead><tr><th>Account</th><th>Head</th><th>Type</th><th class="num">Opening</th><th class="num">Current (সহ sub)</th><th></th></tr></thead><tbody>` +
-    rows.join('') + `</tbody>`;
+      <td style="white-space:nowrap;text-align:right">${l.parent ? '' : `<button class="btn g sm" onclick="startSub('${l.id}')" title="এই head-এর নিচে sub-ledger যোগ করুন">＋ Sub-ledger</button>`} <button class="btn g sm" onclick="startLed('${l.id}')">Edit</button> <button class="btn bad sm" onclick="delLed('${l.id}')">Delete</button></td></tr>`;
+    });
+    const body = sub.length
+      ? `<div class="tw"><table class="tb">${thead.replace('<th>Head</th>', '')}<tbody>${rows}</tbody></table></div>`
+      : '<div class="muted" style="padding:6px 0 12px;font-size:13px">এই group-এ এখনো account নেই</div>';
+    return `<details class="grpbox" open><summary><span class="gdot" style="background:${GCOL[g]}"></span><b>${g}</b> · ${GBN[g]}<span class="grp-tot">মোট: ${money(tot)}</span></summary>${body}</details>`;
+  }).join('');
+}
+// Parent dropdown: শুধু সেই group-এর head (এক level sub-ledger)
+function rebuildParents(sel){
+  const g = $('cGroup').value;
+  const opts = [{v:'', t:'— মূল head (Top level)'}].concat(
+    flatTree().filter(({l}) => l.group === g && !l.parent && l.id !== ledEdit).map(({l}) => ({v:l.id, t:l.name})));
+  fillSel($('cParent'), opts);
+  $('cParent').value = opts.some(o => o.v === sel) ? sel : '';
+}
+function syncOff(){
+  const g = $('cGroup').value, amt = parseAmt($('cOb').value);
+  const want = {Asset:['Equity','Liability'], Liability:['Asset','Equity'], Equity:['Asset']}[g] || [];
+  const show = !ledEdit && amt > 0 && want.length > 0;
+  $('cOff').classList.toggle('hidden', !show);
+  if (!show) return;
+  const opts = flatTree().filter(({l}) => want.includes(l.group)).map(({l}) => ({v:l.id, t:fullName(l.id)}));
+  const cur = $('cOff').value;
+  fillSel($('cOff'), [{v:'', t:'বিপরীত account (Opening-এর counter) বাছুন'}].concat(opts));
+  if (cur && opts.some(o => o.v === cur)) $('cOff').value = cur;
+  else { const cap = S.ledgers.find(l => l.name === 'CAPITAL'); if (cap && opts.some(o => o.v === cap.id)) $('cOff').value = cap.id; }
+  const off = $('cOff').value;
+  if (off){
+    const nm = ($('cName').value || '').trim().toUpperCase() || 'নতুন account';
+    const dr = $('cSide').value === 'dr';
+    $('cHint').innerHTML = `<b>Opening entry:</b> Dr <span class="pill dr">${esc(dr ? nm : fullName(off))}</span> → Cr <span class="pill cr">${esc(dr ? fullName(off) : nm)}</span> <b>${money(amt)}</b>`;
+  }
 }
 function syncCoaForm(){
   const p = $('cParent').value;
+  if (p) $('cGroup').value = L(p).group;
   $('cGroup').disabled = !!p; $('cType').disabled = !!p;
   $('cHint').textContent = p
-    ? `"${fullName(p)}"-এর sub-ledger হবে — group ও type মূল head থেকে আসবে। Voucher-এ sub-ledger বাছলে head-এর report-এ যোগ হবে।`
-    : 'মূল head হিসেবে যোগ হবে। Sub-ledger বানাতে উপরের “Parent” থেকে head বাছুন (যেমন PURCHASE → EGG PURCHASE)।';
+    ? `"${fullName(p)}"-এর sub-ledger হবে — group ও type মূল head থেকে আসবে।`
+    : 'মূল head হিসেবে যোগ হবে। Opening amount দিলে বিপরীত account বেছে opening voucher নিজে তৈরি হবে।';
+  syncOff();
 }
 function startLed(id){
   const l = L(id); if (!l) return;
   ledEdit = id;
-  $('cName').value = l.name; $('cParent').value = l.parent || ''; $('cGroup').value = l.group; $('cType').value = l.type;
+  $('cName').value = l.name; $('cGroup').value = l.group; rebuildParents(l.parent || ''); $('cType').value = l.type;
   $('cSide').value = l.ob.side; $('cOb').value = l.ob.amt ? fmtNum(l.ob.amt) : '';
   $('ledBtn').textContent = 'Update Account';
   $('ledCancel').classList.remove('hidden');
@@ -1571,13 +2170,13 @@ function startLed(id){
 }
 function startSub(parentId){
   cancelLed();
-  $('cParent').value = parentId; syncCoaForm();
+  $('cGroup').value = L(parentId).group; rebuildParents(parentId); syncCoaForm();
   $('cName').focus(); $('cName').scrollIntoView({behavior:'smooth', block:'center'});
   toast(`"${fullName(parentId)}"-এর নিচে নতুন sub-ledger যোগ করুন`);
 }
 function cancelLed(){
   ledEdit = null;
-  $('cName').value = ''; $('cOb').value = ''; $('cParent').value = ''; $('cType').value = 'general'; $('cSide').value = 'dr'; $('cGroup').value = 'Asset';
+  $('cName').value = ''; $('cOb').value = ''; $('cType').value = 'general'; $('cSide').value = 'dr'; $('cGroup').value = 'Asset'; rebuildParents('');
   $('ledBtn').textContent = 'Add Account';
   $('ledCancel').classList.add('hidden');
   $('ledMode').style.display = 'none';
@@ -1588,6 +2187,8 @@ function saveLed(){
   const side = $('cSide').value, amt = Math.abs(parseAmt($('cOb').value));
   if (!name) return toast('Account নাম দিন', true);
   if (parent && !L(parent)) return toast('Parent খুঁজে পাওয়া যায়নি', true);
+  if (parent && L(parent).parent) return toast('Sub-ledger-এর নিচে আরেকটি sub-ledger হবে না — head বাছুন', true);
+  if (parent && ledEdit && kids(ledEdit).length) return toast('যার নিচে sub-ledger আছে, তাকে sub-ledger বানানো যাবে না', true);
   if (parent && ledEdit && subtree(ledEdit).includes(parent)) return toast('নিজের sub-ledger-এর নিচে head বানানো যাবে না', true);
   const group = parent ? L(parent).group : $('cGroup').value;
   const type = parent ? L(parent).type : $('cType').value;
@@ -1599,8 +2200,18 @@ function saveLed(){
     subtree(ledEdit).forEach(x => { if (x !== ledEdit && L(x)){ L(x).group = group; L(x).type = type; } });
     toast('Account updated ✓');
   } else {
-    S.ledgers.push({id:uid(), name, parent, group, type, ob:{side, amt}});
-    toast(parent ? 'Sub-ledger যোগ হয়েছে ✓' : 'Head যোগ হয়েছে ✓');
+    if (amt > 0 && type === 'cash') return toast('Cash account-এর opening Cash page-এ note count করে দিন', true);
+    if (amt > 0 && !['Asset','Liability','Equity'].includes(group)) return toast('Income/Expense-এ opening balance লাগে না', true);
+    const off = amt > 0 ? $('cOff').value : '';
+    if (amt > 0 && (!off || !L(off))) return toast('Opening-এর বিপরীত account বাছুন', true);
+    const nl = {id:uid(), name, parent, group, type, ob:{side, amt:0}};
+    S.ledgers.push(nl);
+    if (amt > 0){
+      const d = today(), dr = side === 'dr';
+      S.vouchers.unshift({id:uid(), type:'JV', date:d, dr: dr ? nl.id : off, cr: dr ? off : nl.id,
+        amt: Math.round(amt * 100) / 100, nar:'OPENING BALANCE — ' + name, ref: nextRef('JV', d)});
+    }
+    toast(parent ? 'Sub-ledger যোগ হয়েছে ✓' : (amt > 0 ? 'Head যোগ হয়েছে, opening voucher তৈরি হয়েছে ✓' : 'Head যোগ হয়েছে ✓'));
   }
   cancelLed(); save();
 }
@@ -1644,15 +2255,15 @@ function importBackup(){
     const text = await f.text();
     try{
       const o = JSON.parse(text);
+      let src = null;
       if (o && o.ct){
-        const p = await askSecret('এই backup-এর passphrase');
+        const p = await askSecret('এই backup-এর password');
         if (!p) return;
-        await restoreEnvelope(text, p);
-        toast('Backup restore হয়েছে ✓');
-      } else if (o && (o.ledgers || o.vouchers)){
-        S = normalize(o); await persist(); render(); fillSettings();
-        toast('পুরনো backup import হয়েছে ও encrypt করা হয়েছে ✓');
-      } else throw new Error('bad');
+        src = (await openEnvelope(text, p)).data;
+      } else if (o && (o.ledgers || o.vouchers)) src = o;
+      else throw new Error('bad');
+      const n = mergeInto(src); await persist(); render(); fillSettings();
+      toast(`Backup merge হয়েছে ✓ (${n.l} নতুন account, ${n.v} নতুন voucher)`);
     }catch(e){ toast('ফাইলটি সঠিক LedgerPro backup নয় বা passphrase ভুল', true); }
   };
   i.click();
@@ -1676,13 +2287,40 @@ function render(){
   fillSel($('vDr'), ledOpts('Debit account বাছুন'));
   fillSel($('vCr'), ledOpts('Credit account বাছুন'));
   fillSel($('lSel'), flatTree().map(({l}) => ({v:l.id, t:fullName(l.id)})));
-  fillSel($('cParent'), [{v:'', t:'— মূল head (Top level)'}].concat(flatTree().map(({l}) => ({v:l.id, t:fullName(l.id)}))));
-  renderDash(); renderLedger(); renderReports(); renderCOA();
+  rebuildParents($('cParent').value);
+  renderDash(); renderLedger(); renderReports(); renderCOA(); renderCash(); renderUnits(); applyUI(); renderRibbon();
   updRefHint(); updPreview(); syncVT(); syncMode(); refreshDriveUI();
+}
+
+/* ============ SETTINGS DROPDOWNS ============ */
+// Settings-এর প্রতিটি card একটি dropdown হবে: শিরোনাম দেখাবে, click করলে ভেতরের অংশ খুলবে
+function makeSettingsDropdowns(){
+  document.querySelectorAll('#p-settings > .card').forEach(card => {
+    if (card.tagName === 'DETAILS') return;
+    const h = card.querySelector(':scope > h3') || card.querySelector('.ch h3');
+    const title = h ? h.textContent.trim() : 'Settings';
+    const det = document.createElement('details');
+    det.className = card.className + ' dd';
+    const sum = document.createElement('summary');
+    sum.innerHTML = `<span><b></b></span><span class="chev">▾</span>`;
+    sum.querySelector('b').textContent = title;
+    det.appendChild(sum);
+    if (h && h.parentElement && h.parentElement.classList.contains('ch')){
+      const ch = h.parentElement;
+      h.remove();
+      if (!ch.children.length && !ch.textContent.trim()) ch.remove();
+    } else if (h) h.remove();
+    const body = document.createElement('div');
+    body.className = 'ddbody';
+    while (card.firstChild) body.appendChild(card.firstChild);
+    det.appendChild(body);
+    card.replaceWith(det);
+  });
 }
 
 /* ============ INIT ============ */
 function init(){
+  makeSettingsDropdowns();
   $('vtypes').innerHTML = Object.keys(VT).map(k => `<button data-t="${k}" onclick="pickType('${k}')" title="${VT[k]}">${k}</button>`).join('');
   $('cfCur').innerHTML = CURS.map(c => `<option>${c}</option>`).join('');
   $('cfFy').innerHTML = MONTHS.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
@@ -1704,14 +2342,25 @@ function init(){
   }, true);
 
   ['vDr','vCr','vAmt','vNar','vDate'].forEach(id => {
-    const h = () => { if (id === 'vAmt') cleanAmtField($('vAmt')); updPreview(); if (id === 'vDate') updRefHint(); };
+    const h = () => { if (id === 'vAmt'){ cleanAmtField($('vAmt')); syncFromAmt(); } updPreview(); updCash(); if (id === 'vDate') updRefHint(); };
     $(id).addEventListener('input', h); $(id).addEventListener('change', h);
   });
+  $('inGrid').innerHTML = buildNoteGrid('in'); $('outGrid').innerHTML = buildNoteGrid('out');
+  ['vDr','vCr'].forEach(id => $(id).addEventListener('change', () => maybePick(id)));
+  $('vMonth').innerHTML = MON3.map(m => `<option>${m}</option>`).join('');
+  $('vCat').addEventListener('change', () => applyCat(true));
+  ['vQty','vRate'].forEach(id => $(id).addEventListener('input', syncFromQR));
   $('vAmt').addEventListener('blur', () => { fmtAmtField($('vAmt')); updPreview(); });
   $('vAmt').addEventListener('keydown', e => { if (e.key === 'Enter') { fmtAmtField($('vAmt')); saveV(); } });
   $('cOb').addEventListener('blur', () => fmtAmtField($('cOb')));
   $('cOb').addEventListener('input', () => cleanAmtField($('cOb')));
+  $('logo').onclick = () => go('dash');
+  setInterval(tickHome, 1000);
   $('cParent').addEventListener('change', syncCoaForm);
+  $('cGroup').addEventListener('change', () => { rebuildParents(''); syncCoaForm(); });
+  $('cOb').addEventListener('input', syncOff);
+  ['cOff','cSide','cName'].forEach(id => $(id).addEventListener('input', syncOff));
+  $('cOff').addEventListener('change', syncOff); $('cSide').addEventListener('change', syncOff);
   $('vFind').addEventListener('keydown', e => { if (e.key === 'Enter') findV(); });
   ['lSel','lFrom','lTo','lQ','lSub'].forEach(id => { $(id).addEventListener('input', renderLedger); $(id).addEventListener('change', renderLedger); });
   ['rFrom','rTo'].forEach(id => { $(id).addEventListener('input', renderReports); $(id).addEventListener('change', renderReports); });
