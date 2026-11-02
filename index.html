@@ -292,10 +292,11 @@ details ol{padding-left:20px}
   .card .in,.card select,.card input{max-width:100%}
 }
 @media(max-width:560px){
-  @keyframes setZoom{from{zoom:1.15;opacity:.5}to{zoom:.86;opacity:1}}
-  #p-settings.on{zoom:.86;animation:setZoom .6s var(--ease)}
-  #p-settings h3,#p-settings summary{font-size:13px}
-  #p-settings .muted{font-size:11px}
+  @keyframes setZoom{from{zoom:1.12;opacity:.6}to{zoom:.86;opacity:1}}
+  #p-settings.on,#p-dash.on{zoom:.86;animation:setZoom .5s cubic-bezier(.22,.61,.36,1)}
+  /* সব section heading একই size — menu bar-এর মতো */
+  .card h3,details.dd>summary,.grpbox>summary{font-size:12px;font-weight:600;letter-spacing:0}
+  .muted{font-size:11px}
 }
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -569,13 +570,13 @@ body.ui-windows .btn{border-radius:4px!important}
         </div>
       </div>
 
-      <div class="catrow"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
+      <div class="catrow" style="display:none"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
       <div class="grid4">
-        <label class="fl"><span>Item (কী কেনা/বেচা)</span><select id="vItem" class="in"></select></label>
+        <label class="fl" id="vItemWrap"><span>Item (কী কেনা/বেচা)</span><select id="vItem" class="in"></select></label>
         <input id="vItemTxt" class="in" placeholder="Item নাম নিজে লিখুন" style="display:none;margin-top:6px">
-        <label class="fl"><span id="qtyLblT">Quantity (পরিমাণ)</span><input id="vQty" class="in" inputmode="decimal" placeholder="যেমন 5"><select id="vMonth" class="in hidden"></select></label>
-        <label class="fl"><span>Unit</span><select id="vUnit" class="in"></select></label>
-        <label class="fl"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
+        <label class="fl" id="vQtyWrap"><span id="qtyLblT">Quantity (পরিমাণ)</span><input id="vQty" class="in" inputmode="decimal" placeholder="যেমন 5"><select id="vMonth" class="in hidden"></select></label>
+        <label class="fl" id="vUnitWrap"><span>Unit</span><select id="vUnit" class="in"></select></label>
+        <label class="fl" id="vRateWrap"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
       </div>
       <div class="grid2">
         <label class="fl"><span>Amount</span><input id="vAmt" type="text" inputmode="decimal" class="in amt" placeholder="0.00"></label>
@@ -1575,6 +1576,7 @@ function syncMode(){
 function updRefHint(){ if (!S) return; $('vRef').placeholder = 'Auto → ' + nextRef(formType, $('vDate').value || today()); }
 function pickType(t){ formType = t; syncVT(); if (!editId) updRefHint(); }
 function updPreview(){
+  itemFilter();
   const d = $('vDr').value, c = $('vCr').value, a = parseAmt($('vAmt').value);
   const ok = d && c && d !== c && a > 0;
   $('awords').textContent = a > 0 ? amountWords(a) : '';
@@ -1740,7 +1742,25 @@ const KIND_GRP = {exp: 'Expense', inc: 'Income'};
 const ledSelOpts = (sel, grp) => [{v: '', t: '— ledger বাছুন'}].concat(flatTree().filter(({l}) => !grp || l.group === grp).map(({l}) => ({v: l.id, t: fullName(l.id)})))
   .map(o => `<option value="${esc(o.v)}"${o.v === (sel || '') ? ' selected' : ''}>${esc(o.t)}</option>`).join('');
 const itemOpts = () => '<option value="">— item নেই —</option><option value="__oth">OTHERS (নিজে লিখুন)</option>' + S.items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
-function itemTxtTog(){ const t = $('vItemTxt'); if (t) t.style.display = $('vItem').value === '__oth' ? '' : 'none'; }
+function itemTxtTog(){ const t = $('vItemTxt'), w = $('vItemWrap'); if (t) t.style.display = (w && w.style.display !== 'none' && $('vItem').value === '__oth') ? '' : 'none'; }
+// Account বাছলে শুধু সেই ledger-এর item দেখাবে; item না থাকলে পুরো item ঘর লুকানো থাকবে
+function itemFilter(){
+  const w = $('vItemWrap'); if (!w || !S) return;
+  const led = [$('vDr').value, $('vCr').value].filter(Boolean);
+  const list = S.items.filter(i => i.ledger && led.includes(i.ledger));
+  const qr = ['vQtyWrap', 'vUnitWrap', 'vRateWrap'].map(id => $(id));
+  if (!list.length){
+    w.style.display = 'none'; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog();
+    // item নেই = qty/unit/rate-ও নেই; লুকানো ঘরের পুরনো মান হিসাব থেকে বাদ
+    qr.forEach(x => x.style.display = 'none'); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = '';
+    return;
+  }
+  w.style.display = ''; qr.forEach(x => x.style.display = '');
+  const cur = $('vItem').value;
+  fillSel($('vItem'), [{v: '', t: '— Item বাছুন (ঐচ্ছিক)'}, {v: '__oth', t: 'OTHERS — নিজে লিখুন'}].concat(list.map(i => ({v: i.id, t: i.name}))));
+  $('vItem').value = (cur === '__oth' || list.some(i => i.id === cur)) ? cur : '';
+  itemTxtTog();
+}
 function mlItemTog(k){ const t = $('ml_itxt_' + k); if (t) t.style.display = $('ml_item_' + k).value === '__oth' ? '' : 'none'; }
 function itemName(selVal, txt){
   if (selVal === '__oth') return (txt || '').trim().toUpperCase().slice(0, 80) || null;
@@ -1760,10 +1780,7 @@ function renderItems(){
   $('itemListBox').innerHTML = sec('exp', '💸 Expense items') + sec('inc', '💰 Income items');
   $('itLed').innerHTML = ledSelOpts($('itLed').value, 'Expense');
   $('itLedI').innerHTML = ledSelOpts($('itLedI').value, 'Income');
-  const cur = $('vItem').value;
-  fillSel($('vItem'), [{v: '', t: '— Item বাছুন (ঐচ্ছিক)'}, {v: '__oth', t: 'OTHERS — নিজে লিখুন'}].concat(S.items.map(i => ({v: i.id, t: i.name}))));
-  if (cur && (cur === '__oth' || S.items.some(i => i.id === cur))) $('vItem').value = cur;
-  itemTxtTog();
+  itemFilter();
 }
 function itemAdd(kind){
   const isInc = kind === 'inc';
