@@ -29,7 +29,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{font-family:var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden;transition:background .6s var(--ease),color .4s}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;transition:background .6s var(--ease),color .4s}
 body.locked .top,body.locked .wrap{display:none}
 .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.5;z-index:-1;pointer-events:none;animation:float 24s ease-in-out infinite alternate}
 .b1{width:540px;height:540px;background:var(--accent);top:-200px;left:-140px}
@@ -280,7 +280,16 @@ details ol{padding-left:20px}
   .pnav .ib{width:36px;height:36px}
   .nav{gap:3px;padding:4px;overflow-x:auto}
   .nav button{flex:0 0 auto;min-width:0;padding:8px 10px;font-size:12px;line-height:1.2;white-space:nowrap}
-  .wrap{max-width:100%;overflow-x:hidden}
+  .wrap{max-width:100%}
+  .row>*{min-width:0;max-width:100%}
+  .row .in,.row select.in{flex:1 1 150px}
+  .drow{flex-wrap:wrap}
+  .drow>span{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .itEd{display:flex;flex-direction:column;gap:6px;flex:1 1 100%;min-width:0}
+  .itEd .in{width:100%}
+  .uact{flex-wrap:wrap}
+  .card{max-width:100%}
+  .card .in,.card select,.card input{max-width:100%}
 }
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
