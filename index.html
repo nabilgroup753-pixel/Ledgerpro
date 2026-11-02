@@ -291,6 +291,12 @@ details ol{padding-left:20px}
   .card{max-width:100%}
   .card .in,.card select,.card input{max-width:100%}
 }
+@media(max-width:560px){
+  @keyframes setZoom{from{zoom:1.15;opacity:.5}to{zoom:.86;opacity:1}}
+  #p-settings.on{zoom:.86;animation:setZoom .6s var(--ease)}
+  #p-settings h3,#p-settings summary{font-size:13px}
+  #p-settings .muted{font-size:11px}
+}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body>*:not(#printArea){display:none!important}
@@ -566,6 +572,7 @@ body.ui-windows .btn{border-radius:4px!important}
       <div class="catrow"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
       <div class="grid4">
         <label class="fl"><span>Item (কী কেনা/বেচা)</span><select id="vItem" class="in"></select></label>
+        <input id="vItemTxt" class="in" placeholder="Item নাম নিজে লিখুন" style="display:none;margin-top:6px">
         <label class="fl"><span id="qtyLblT">Quantity (পরিমাণ)</span><input id="vQty" class="in" inputmode="decimal" placeholder="যেমন 5"><select id="vMonth" class="in hidden"></select></label>
         <label class="fl"><span>Unit</span><select id="vUnit" class="in"></select></label>
         <label class="fl"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
@@ -667,8 +674,11 @@ body.ui-windows .btn{border-radius:4px!important}
   <section class="page" id="p-settings">
     <div class="glass card">
       <h3>🧾 Item তালিকা</h3>
-      <div class="muted" style="font-size:12px;margin-bottom:8px">Item বাছলে voucher-এ কোন ledger-এ যাবে সেটা নিজে বসে যাবে</div>
-      <div class="row"><input id="itNew" class="in" placeholder="Item নাম (যেমন EGG)"><select id="itLed" class="in"></select><button class="btn sm" onclick="itemAdd()">Add</button></div>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">Item বাছলে voucher-এ কোন ledger-এ যাবে সেটা নিজে বসে যাবে। Voucher-এ "OTHERS" বাছলে নিজে নাম লেখার ঘর আসবে।</div>
+      <div style="font-weight:600;font-size:13px;margin:6px 0">💸 Expense item</div>
+      <div class="row"><input id="itNew" class="in" placeholder="Item নাম (যেমন EGG)"><select id="itLed" class="in"></select><button class="btn sm" onclick="itemAdd('exp')">Add</button></div>
+      <div style="font-weight:600;font-size:13px;margin:12px 0 6px">💰 Income item</div>
+      <div class="row"><input id="itNewI" class="in" placeholder="Item নাম (যেমন SALE)"><select id="itLedI" class="in"></select><button class="btn sm" onclick="itemAdd('inc')">Add</button></div>
       <div id="itemListBox" style="margin-top:10px"></div>
     </div>
     <details class="glass card dd">
@@ -966,7 +976,8 @@ function normalize(d){
   s.uid = d.uid ? String(d.uid) : null;
   s.items = (Array.isArray(d.items) ? d.items : []).map(i => ({
     id: String(i.id || uid()), name: String(i.name || '').toUpperCase().trim().slice(0, 80),
-    ledger: i.ledger && s.ledgers.some(l => l.id === String(i.ledger)) ? String(i.ledger) : null
+    ledger: i.ledger && s.ledgers.some(l => l.id === String(i.ledger)) ? String(i.ledger) : null,
+    kind: i.kind === 'inc' || i.kind === 'exp' ? i.kind : (i.ledger && (s.ledgers.find(l => l.id === String(i.ledger)) || {}).group === 'Income' ? 'inc' : 'exp')
   })).filter(i => i.name);
   s.units = Array.isArray(d.units) && d.units.length ? [...new Set(d.units.map(u => String(u).toUpperCase().trim()).filter(Boolean))] : DEF_UNITS.slice();
   s.vaultId = String(d.vaultId || uid());
@@ -1576,7 +1587,7 @@ function clearForm(){
   $('vDate').value = today(); $('vRef').value = ''; $('vAmt').value = ''; $('vNar').value = '';
   $('vDr').value = ''; $('vCr').value = ''; $('vFind').value = '';
   setNotes('in', null); setNotes('out', null);
-  $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; $('vItem').value = '';
+  $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog();
   $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false);
   syncVT(); syncMode(); updRefHint(); updPreview(); updCash();
 }
@@ -1589,7 +1600,9 @@ function loadV(id){
   $('vDr').value = v.dr; $('vCr').value = v.cr;
   setNotes('in', v.nin); setNotes('out', v.nout);
   $('vCat').value = v.cat || 'OTHERS'; $('vMonth').value = v.month ? v.month.split(' ')[0] : ''; applyCat(false);
-  $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; $('vItem').value = (S.items.find(i => i.name === v.item) || {}).id || '';
+  $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; const mi = S.items.find(i => i.name === v.item);
+  $('vItem').value = mi ? mi.id : ((v.item && (v.cat || 'OTHERS') === 'OTHERS') ? '__oth' : '');
+  $('vItemTxt').value = (!mi && v.item && (v.cat || 'OTHERS') === 'OTHERS') ? v.item : ''; itemTxtTog();
   syncVT(); syncMode(); updPreview(); updCash(); go('entry');
 }
 function findV(){
@@ -1613,7 +1626,7 @@ function saveV(){
   const qty = parseAmt($('vQty').value) || 0, rate = parseAmt($('vRate').value) || 0, unit = ($('vUnit').value || '').trim().toUpperCase() || null;
   const itm = S.items.find(i => i.id === $('vItem').value);
   const cat0 = $('vCat').value || 'OTHERS';
-  const item = cat0 !== 'OTHERS' ? cat0 : (itm ? itm.name : null);
+  const item = cat0 !== 'OTHERS' ? cat0 : ($('vItem').value === '__oth' ? ($('vItemTxt').value || '').trim().toUpperCase().slice(0, 80) || null : (itm ? itm.name : null));
   const cat = $('vCat').value || 'OTHERS', sb = cat !== 'OTHERS';
   const month = sb ? ($('vMonth').value ? $('vMonth').value + ' ' + date.slice(0, 4) : null) : null;
   if (sb && !month) return toast('Month বাছুন', true);
@@ -1638,7 +1651,7 @@ function saveV(){
   } else {
     S.vouchers.unshift({id:uid(), type, date, dr, cr, amt, nar, ref, nin, nout, qty: qty > 0 ? qty : null, rate: rate > 0 ? rate : null, unit, item, cat: sb ? cat : null, month});
     toast('Voucher saved ✓');
-    $('vAmt').value = ''; $('vNar').value = ''; $('vRef').value = ''; $('vItem').value = ''; $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; setNotes('in', null); setNotes('out', null); updCash();
+    $('vAmt').value = ''; $('vNar').value = ''; $('vRef').value = ''; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog(); $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; setNotes('in', null); setNotes('out', null); updCash();
   }
   save();
 }
@@ -1661,7 +1674,7 @@ function applyCat(fresh){
     }
   } else {
     $('vUnit').disabled = false;
-    if (fresh && ($('vItem').value === 'SALARY' || $('vItem').value === 'BONUS')) $('vItem').value = '';
+    if (fresh && ($('vItem').value === 'SALARY' || $('vItem').value === 'BONUS')) { $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog(); }
     renderUnits();
   }
   updPreview(); updCash();
@@ -1723,27 +1736,43 @@ function tickHome(){
 
 /* ============ ITEM LIST ============ */
 let itEdit = null;
-const ledSelOpts = sel => [{v: '', t: '— ledger বাছুন'}].concat(flatTree().map(({l}) => ({v: l.id, t: fullName(l.id)})))
+const KIND_GRP = {exp: 'Expense', inc: 'Income'};
+const ledSelOpts = (sel, grp) => [{v: '', t: '— ledger বাছুন'}].concat(flatTree().filter(({l}) => !grp || l.group === grp).map(({l}) => ({v: l.id, t: fullName(l.id)})))
   .map(o => `<option value="${esc(o.v)}"${o.v === (sel || '') ? ' selected' : ''}>${esc(o.t)}</option>`).join('');
-const itemOpts = () => '<option value="">— item নেই —</option>' + S.items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+const itemOpts = () => '<option value="">— item নেই —</option><option value="__oth">OTHERS (নিজে লিখুন)</option>' + S.items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+function itemTxtTog(){ const t = $('vItemTxt'); if (t) t.style.display = $('vItem').value === '__oth' ? '' : 'none'; }
+function mlItemTog(k){ const t = $('ml_itxt_' + k); if (t) t.style.display = $('ml_item_' + k).value === '__oth' ? '' : 'none'; }
+function itemName(selVal, txt){
+  if (selVal === '__oth') return (txt || '').trim().toUpperCase().slice(0, 80) || null;
+  return (S.items.find(i => i.id === selVal) || {}).name || null;
+}
 function renderItems(){
   if (!S || !$('itemListBox')) return;
-  $('itemListBox').innerHTML = S.items.map(it => it.id === itEdit
-    ? `<div class="drow"><span class="itEd"><input id="itEN" class="in" value="${esc(it.name)}"><select id="itEL" class="in">${ledSelOpts(it.ledger)}</select></span><span class="uact"><button class="btn sm" onclick="itemSave('${it.id}')">Save</button> <button class="btn g sm" onclick="itemCancel()">✕</button></span></div>`
-    : `<div class="drow"><span>${esc(it.name)} <span class="muted" style="font-size:12px">→ ${it.ledger ? esc(fullName(it.ledger)) : 'ledger নেই'}</span></span><span class="uact"><button class="btn g sm" onclick="itemEdit('${it.id}')">Edit</button> <button class="btn bad sm" onclick="itemDel('${it.id}')">Delete</button></span></div>`
-  ).join('') || '<div class="muted" style="font-size:13px">কোনো item নেই</div>';
-  const cl = $('itLed').value;
-  $('itLed').innerHTML = ledSelOpts(cl);
+  const row = it => it.id === itEdit
+    ? `<div class="drow"><span class="itEd"><input id="itEN" class="in" value="${esc(it.name)}"><select id="itEL" class="in">${ledSelOpts(it.ledger, KIND_GRP[it.kind])}</select></span><span class="uact"><button class="btn sm" onclick="itemSave('${it.id}')">Save</button> <button class="btn g sm" onclick="itemCancel()">✕</button></span></div>`
+    : `<div class="drow"><span>${esc(it.name)} <span class="muted" style="font-size:12px">→ ${it.ledger ? esc(fullName(it.ledger)) : 'ledger নেই'}</span></span><span class="uact"><button class="btn g sm" onclick="itemEdit('${it.id}')">Edit</button> <button class="btn bad sm" onclick="itemDel('${it.id}')">Delete</button></span></div>`;
+  const sec = (kind, title) => {
+    const list = S.items.filter(i => i.kind === kind);
+    return `<div style="font-weight:700;font-size:13px;margin:10px 0 4px">${title}</div>` +
+      (list.map(row).join('') || '<div class="muted" style="font-size:13px">কোনো item নেই</div>') +
+      `<div class="drow"><span class="muted">📝 OTHERS <span style="font-size:12px">→ voucher-এ নিজে নাম লিখবেন, ledger নিজে বাছবেন</span></span></div>`;
+  };
+  $('itemListBox').innerHTML = sec('exp', '💸 Expense items') + sec('inc', '💰 Income items');
+  $('itLed').innerHTML = ledSelOpts($('itLed').value, 'Expense');
+  $('itLedI').innerHTML = ledSelOpts($('itLedI').value, 'Income');
   const cur = $('vItem').value;
-  fillSel($('vItem'), [{v: '', t: '— Item বাছুন (ঐচ্ছিক)'}].concat(S.items.map(i => ({v: i.id, t: i.name}))));
-  if (cur && S.items.some(i => i.id === cur)) $('vItem').value = cur;
+  fillSel($('vItem'), [{v: '', t: '— Item বাছুন (ঐচ্ছিক)'}, {v: '__oth', t: 'OTHERS — নিজে লিখুন'}].concat(S.items.map(i => ({v: i.id, t: i.name}))));
+  if (cur && (cur === '__oth' || S.items.some(i => i.id === cur))) $('vItem').value = cur;
+  itemTxtTog();
 }
-function itemAdd(){
-  const name = ($('itNew').value || '').trim().toUpperCase(), ledger = $('itLed').value;
+function itemAdd(kind){
+  const isInc = kind === 'inc';
+  const name = ($(isInc ? 'itNewI' : 'itNew').value || '').trim().toUpperCase(), ledger = $(isInc ? 'itLedI' : 'itLed').value;
   if (!name) return toast('Item-এর নাম দিন', true);
+  if (name === 'OTHERS') return toast('OTHERS আলাদা করে রাখা আছে, অন্য নাম দিন', true);
   if (!ledger || !L(ledger)) return toast('কোন ledger-এ যাবে সেটা বাছুন', true);
   if (S.items.some(i => i.name === name)) return toast('এই item আগে থেকেই আছে', true);
-  S.items.push({id: uid(), name, ledger}); $('itNew').value = ''; save(); toast('Item যোগ হয়েছে ✓');
+  S.items.push({id: uid(), name, ledger, kind}); $(isInc ? 'itNewI' : 'itNew').value = ''; save(); toast('Item যোগ হয়েছে ✓');
 }
 function itemEdit(id){ itEdit = id; renderItems(); }
 function itemCancel(){ itEdit = null; renderItems(); }
@@ -1751,6 +1780,7 @@ function itemSave(id){
   const it = S.items.find(i => i.id === id); if (!it) return;
   const name = ($('itEN').value || '').trim().toUpperCase(), ledger = $('itEL').value;
   if (!name) return toast('নাম খালি রাখা যাবে না', true);
+  if (name === 'OTHERS') return toast('OTHERS নাম রাখা যাবে না', true);
   if (S.items.some(i => i.name === name && i.id !== id)) return toast('এই নামে item আছে', true);
   if (!ledger || !L(ledger)) return toast('ledger বাছুন', true);
   it.name = name; it.ledger = ledger; itEdit = null; save(); toast('Item আপডেট হয়েছে ✓');
@@ -1762,6 +1792,7 @@ function itemDel(id){
 }
 // Item বাছলে তার ledger নিজে Dr/Cr-এ বসবে (expense/asset → Dr, income/liability/equity → Cr)
 function itemPicked(){
+  itemTxtTog();
   const it = S.items.find(i => i.id === $('vItem').value);
   if (it && it.ledger){
     const g = L(it.ledger).group, side = ['Income', 'Liability', 'Equity'].includes(g) ? 'vCr' : 'vDr';
@@ -1821,7 +1852,7 @@ function mlAdd(side){
   tr.dataset.k = k;
   tr.innerHTML = `<td><select id="ml_side_${k}" class="in" onchange="mlTot()"><option value="dr"${side === 'cr' ? '' : ' selected'}>Dr</option><option value="cr"${side === 'cr' ? ' selected' : ''}>Cr</option></select></td>
     <td><select id="ml_led_${k}" class="in" onchange="maybePick('ml_led_${k}');mlTot()">${opts}</select></td>
-    <td><select id="ml_item_${k}" class="in">${itemOpts()}</select></td>
+    <td><select id="ml_item_${k}" class="in" onchange="mlItemTog(${k})">${itemOpts()}</select><input id="ml_itxt_${k}" class="in" placeholder="Item লিখুন" style="display:none;margin-top:4px"></td>
     <td><input id="ml_qty_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
     <td><input id="ml_rate_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
     <td><input id="ml_amt_${k}" class="in nin" inputmode="decimal" oninput="mlTot()"></td>
@@ -1838,7 +1869,7 @@ function mlRowAmt(k){
 function mlRead(){
   return [...document.querySelectorAll('#mlTbl tbody tr')].map(tr => {
     const k = tr.dataset.k;
-    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: (S.items.find(i => i.id === $('ml_item_' + k).value) || {}).name || null,
+    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: itemName($('ml_item_' + k).value, $('ml_itxt_' + k).value),
       amt: Math.round((parseAmt($('ml_amt_' + k).value) || 0) * 100) / 100};
   });
 }
