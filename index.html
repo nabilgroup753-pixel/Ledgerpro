@@ -273,6 +273,15 @@ details ol{padding-left:20px}
   .perLbl{min-width:0;font-size:13px}
   .vp{padding:18px}
 }
+@media(max-width:560px){
+  .periodBar{flex-direction:column;align-items:stretch;gap:10px;padding:12px}
+  .periodBar .seg button{padding:8px 4px;font-size:12px}
+  .pnav{justify-content:space-between;gap:6px}
+  .pnav .ib{width:36px;height:36px}
+  .nav{gap:2px;padding:4px;overflow-x:visible}
+  .nav button{flex:1 1 0;min-width:0;padding:8px 2px;font-size:11px;line-height:1.25;white-space:normal;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .wrap{max-width:100%;overflow-x:hidden}
+}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body>*:not(#printArea){display:none!important}
@@ -383,11 +392,12 @@ body.ui-windows .btn{border-radius:4px!important}
     <label class="fl" id="uidWrap"><span>User ID</span><input id="uid1" class="in" autocomplete="username" placeholder="যেমন monib"></label>
     <label class="fl"><span>Password</span><input id="pass1" type="password" class="in" autocomplete="current-password"></label>
     <label class="fl hidden" id="pass2Wrap"><span>Password আবার লিখুন</span><input id="pass2" type="password" class="in" autocomplete="new-password"></label>
-    <div class="hint hidden" id="setupHint">কমপক্ষে ১২ অক্ষর, অন্তত একটি অক্ষর ও একটি সংখ্যা। Passphrase কোথাও save হয় না — ভুললে data আর খোলা যাবে না।</div>
+    <div class="hint hidden" id="setupHint">Password কমপক্ষে ৬ অক্ষর (সংখ্যা বা অক্ষর যেকোনো)। Password কোথাও save হয় না — ভুললে data আর খোলা যাবে না।</div>
     <div class="row" style="margin-top:16px;flex-direction:column;align-items:stretch">
       <button class="btn" id="lockBtn" onclick="doLock()">Unlock</button>
       <button class="btn g hidden" id="bioBtn" onclick="bioUnlock()">👆 Fingerprint diye unlock</button>
       <button class="btn g hidden" id="lockRestore" onclick="setupRestore()">☁️ Google Drive থেকে restore</button>
+      <button class="btn g hidden" id="lockReset" onclick="resetVault()">Password ভুলে গেছেন? নতুন user হিসেবে শুরু করুন</button>
     </div>
     <div class="err" id="lockErr"></div>
   </div>
@@ -546,7 +556,7 @@ body.ui-windows .btn{border-radius:4px!important}
 
       <div class="catrow"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
       <div class="grid4">
-        <label class="fl"><span>Item (কী কেনা/বেচা)</span><input id="vItem" class="in" placeholder="যেমন EGG, CHAIR"></label>
+        <label class="fl"><span>Item (কী কেনা/বেচা)</span><select id="vItem" class="in"></select></label>
         <label class="fl"><span id="qtyLblT">Quantity (পরিমাণ)</span><input id="vQty" class="in" inputmode="decimal" placeholder="যেমন 5"><select id="vMonth" class="in hidden"></select></label>
         <label class="fl"><span>Unit</span><select id="vUnit" class="in"></select></label>
         <label class="fl"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
@@ -646,6 +656,12 @@ body.ui-windows .btn{border-radius:4px!important}
 
   <!-- SETTINGS -->
   <section class="page" id="p-settings">
+    <div class="glass card">
+      <h3>🧾 Item তালিকা</h3>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">Item বাছলে voucher-এ কোন ledger-এ যাবে সেটা নিজে বসে যাবে</div>
+      <div class="row"><input id="itNew" class="in" placeholder="Item নাম (যেমন EGG)"><select id="itLed" class="in"></select><button class="btn sm" onclick="itemAdd()">Add</button></div>
+      <div id="itemListBox" style="margin-top:10px"></div>
+    </div>
     <details class="glass card dd">
       <summary><span><b>Unit তালিকা</b> <span class="muted" style="font-size:12px">· Voucher-এর Unit dropdown</span></span><span class="chev">▾</span></summary>
       <div class="row"><input id="uNew" class="in" placeholder="নতুন unit (যেমন BAG)"><button class="btn sm" onclick="unitAdd()">Add</button></div>
@@ -840,7 +856,7 @@ let pendingEnv = null;
 let formType = 'JV', editId = null, ledEdit = null, sheetId = null, rType = 'tb';
 let gToken = null, gExp = 0, backupTimer = null, dirty = false, idleT = null;
 let lastBackup = +localStorage.getItem(LASTBK_KEY) || 0;
-let per = {kind:'monthly', anchor:''};
+let per = {kind:'daily', anchor:''};
 
 /* ============ CRYPTO ============ */
 const enc = new TextEncoder(), dec = new TextDecoder();
@@ -862,7 +878,7 @@ async function openEnvelope(envStr, pass){
   const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(e.iv)}, key, unb64(e.ct));
   return {data: JSON.parse(dec.decode(pt)), key, salt};
 }
-function strongOK(p){ return p.length >= 12 && /[A-Za-z]/.test(p) && /\d/.test(p); }
+function strongOK(p){ return p.length >= 6; }
 
 /* ============ DATA ============ */
 function persist(){
@@ -877,7 +893,7 @@ function persist(){
 }
 function save(){ render(); persist(); }
 
-function blank(){ return {v:13, vaultId: uid(), imported: [], notes: emptyNotes(), units: DEF_UNITS.slice(), co:{name:'MY COMPANY', sub:'DAILY ACCOUNTS', cur:'৳', fy:7, theme:'auto', accent:'#6366f1', accent2:'#8b5cf6', glass:55, design:'classic', logo:'', bg:''}, ledgers:defLedgers(), vouchers:[]}; }
+function blank(){ return {v:13, vaultId: uid(), imported: [], notes: emptyNotes(), units: DEF_UNITS.slice(), items: [], co:{name:'MY COMPANY', sub:'DAILY ACCOUNTS', cur:'৳', fy:7, theme:'auto', accent:'#6366f1', accent2:'#8b5cf6', glass:55, design:'classic', logo:'', bg:''}, ledgers:defLedgers(), vouchers:[]}; }
 function defLedgers(){
   const fixed = uid();
   return [
@@ -939,6 +955,10 @@ function normalize(d){
   s.ledgers.forEach(l => { if (!l.parent) return; let p = l.parent, n = 0; while (n < 30){ const q = s.ledgers.find(x => x.id === p); if (!q || !q.parent) break; p = q.parent; n++; } l.parent = p; });
   s.notes = normNotes(d.notes);
   s.uid = d.uid ? String(d.uid) : null;
+  s.items = (Array.isArray(d.items) ? d.items : []).map(i => ({
+    id: String(i.id || uid()), name: String(i.name || '').toUpperCase().trim().slice(0, 80),
+    ledger: i.ledger && s.ledgers.some(l => l.id === String(i.ledger)) ? String(i.ledger) : null
+  })).filter(i => i.name);
   s.units = Array.isArray(d.units) && d.units.length ? [...new Set(d.units.map(u => String(u).toUpperCase().trim()).filter(Boolean))] : DEF_UNITS.slice();
   s.vaultId = String(d.vaultId || uid());
   s.imported = Array.isArray(d.imported) ? d.imported.map(String) : [];
@@ -989,9 +1009,19 @@ function showLock(mode){
   $('setupHint').classList.toggle('hidden', !setup);
   $('lockBtn').textContent = setup ? 'Vault তৈরি করুন' : 'Unlock';
   $('lockRestore').classList.toggle('hidden', !setup);
+  $('lockReset').classList.toggle('hidden', setup);
   $('bioBtn').classList.toggle('hidden', setup || !localStorage.getItem('LP_BIO') || !!pendingEnv);
   $('pass1').value = ''; $('pass2').value = ''; $('lockErr').textContent = '';
   setTimeout(() => $('pass1').focus(), 60);
+}
+// পুরনো password ভুলে গেলে: এই browser-এর পুরনো data মুছে নতুন vault
+function resetVault(){
+  if (!confirm('এই browser থেকে পুরনো সব data মুছে যাবে। পুরনো password ছাড়া সেটি আর খোলা যাবে না। চালিয়ে যাবেন?')) return;
+  if (!confirm('নিশ্চিত? এটি আর ফেরানো যাবে না।')) return;
+  ['LP_VAULT','LP_FAIL','LP_UID','LP_BIO','LP_LASTBK','LP_V12','LP_V11_ALL'].forEach(k => localStorage.removeItem(k));
+  pendingEnv = null; S = null; CK = null; SALT = null; VAULT = null;
+  showLock('setup');
+  toast('নতুন vault তৈরি করুন — নতুন User ID ও password দিন');
 }
 function hideLock(){ $('lock').classList.remove('on'); document.body.classList.remove('locked'); }
 
@@ -1004,7 +1034,7 @@ async function doLock(){
   try{
     if (mode === 'setup'){
       if (!/^[a-z0-9_.@-]{3,32}$/.test(uidIn)) return err.textContent = 'User ID কমপক্ষে ৩ অক্ষর (a-z, 0-9, _ . @ -)';
-      if (!strongOK(p)) return err.textContent = 'Password-এ কমপক্ষে ১২ অক্ষর, অক্ষর ও সংখ্যা দুটোই থাকতে হবে';
+      if (!strongOK(p)) return err.textContent = 'Password-এ কমপক্ষে ৬ অক্ষর দিন';
       if (p !== $('pass2').value) return err.textContent = 'দুটো passphrase মেলেনি';
       SALT = crypto.getRandomValues(new Uint8Array(16));
       CK = await deriveKey(p, SALT);
@@ -1127,7 +1157,7 @@ async function changePass(){
   try{ await openEnvelope(VAULT, cur); } catch(e){ return toast('বর্তমান passphrase ভুল', true); }
   const np = await askSecret('নতুন passphrase (১২+ অক্ষর, অক্ষর ও সংখ্যা)');
   if (!np) return;
-  if (!strongOK(np)) return toast('নতুন passphrase যথেষ্ট শক্তিশালী নয়', true);
+  if (!strongOK(np)) return toast('নতুন password কমপক্ষে ৬ অক্ষর হতে হবে', true);
   SALT = crypto.getRandomValues(new Uint8Array(16));
   CK = await deriveKey(np, SALT);
   await persist();
@@ -1550,7 +1580,7 @@ function loadV(id){
   $('vDr').value = v.dr; $('vCr').value = v.cr;
   setNotes('in', v.nin); setNotes('out', v.nout);
   $('vCat').value = v.cat || 'OTHERS'; $('vMonth').value = v.month ? v.month.split(' ')[0] : ''; applyCat(false);
-  $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; $('vItem').value = v.item || '';
+  $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; $('vItem').value = (S.items.find(i => i.name === v.item) || {}).id || '';
   syncVT(); syncMode(); updPreview(); updCash(); go('entry');
 }
 function findV(){
@@ -1572,7 +1602,9 @@ function saveV(){
   if (S.vouchers.some(v => v.ref.toLowerCase() === ref.toLowerCase() && v.id !== editId))
     return toast('এই Voucher No. আগে থেকেই আছে', true);
   const qty = parseAmt($('vQty').value) || 0, rate = parseAmt($('vRate').value) || 0, unit = ($('vUnit').value || '').trim().toUpperCase() || null;
-  const item = ($('vItem').value || '').trim().toUpperCase() || null;
+  const itm = S.items.find(i => i.id === $('vItem').value);
+  const cat0 = $('vCat').value || 'OTHERS';
+  const item = cat0 !== 'OTHERS' ? cat0 : (itm ? itm.name : null);
   const cat = $('vCat').value || 'OTHERS', sb = cat !== 'OTHERS';
   const month = sb ? ($('vMonth').value ? $('vMonth').value + ' ' + date.slice(0, 4) : null) : null;
   if (sb && !month) return toast('Month বাছুন', true);
@@ -1615,7 +1647,6 @@ function applyCat(fresh){
     $('vQty').value = '1';
     $('vUnit').innerHTML = '<option value="1">1</option>'; $('vUnit').value = '1'; $('vUnit').disabled = true;
     if (fresh){
-      $('vItem').value = c;
       const m = +((($('vDate').value || today()).slice(5, 7))) - 1;
       $('vMonth').value = MON3[m] || MON3[0];
     }
@@ -1681,6 +1712,56 @@ function tickHome(){
   $('hDate').textContent = d.toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
 }
 
+/* ============ ITEM LIST ============ */
+let itEdit = null;
+const ledSelOpts = sel => [{v: '', t: '— ledger বাছুন'}].concat(flatTree().map(({l}) => ({v: l.id, t: fullName(l.id)})))
+  .map(o => `<option value="${esc(o.v)}"${o.v === (sel || '') ? ' selected' : ''}>${esc(o.t)}</option>`).join('');
+const itemOpts = () => '<option value="">— item নেই —</option>' + S.items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+function renderItems(){
+  if (!S || !$('itemListBox')) return;
+  $('itemListBox').innerHTML = S.items.map(it => it.id === itEdit
+    ? `<div class="drow"><span class="itEd"><input id="itEN" class="in" value="${esc(it.name)}"><select id="itEL" class="in">${ledSelOpts(it.ledger)}</select></span><span class="uact"><button class="btn sm" onclick="itemSave('${it.id}')">Save</button> <button class="btn g sm" onclick="itemCancel()">✕</button></span></div>`
+    : `<div class="drow"><span>${esc(it.name)} <span class="muted" style="font-size:12px">→ ${it.ledger ? esc(fullName(it.ledger)) : 'ledger নেই'}</span></span><span class="uact"><button class="btn g sm" onclick="itemEdit('${it.id}')">Edit</button> <button class="btn bad sm" onclick="itemDel('${it.id}')">Delete</button></span></div>`
+  ).join('') || '<div class="muted" style="font-size:13px">কোনো item নেই</div>';
+  const cl = $('itLed').value;
+  $('itLed').innerHTML = ledSelOpts(cl);
+  const cur = $('vItem').value;
+  fillSel($('vItem'), [{v: '', t: '— Item বাছুন (ঐচ্ছিক)'}].concat(S.items.map(i => ({v: i.id, t: i.name}))));
+  if (cur && S.items.some(i => i.id === cur)) $('vItem').value = cur;
+}
+function itemAdd(){
+  const name = ($('itNew').value || '').trim().toUpperCase(), ledger = $('itLed').value;
+  if (!name) return toast('Item-এর নাম দিন', true);
+  if (!ledger || !L(ledger)) return toast('কোন ledger-এ যাবে সেটা বাছুন', true);
+  if (S.items.some(i => i.name === name)) return toast('এই item আগে থেকেই আছে', true);
+  S.items.push({id: uid(), name, ledger}); $('itNew').value = ''; save(); toast('Item যোগ হয়েছে ✓');
+}
+function itemEdit(id){ itEdit = id; renderItems(); }
+function itemCancel(){ itEdit = null; renderItems(); }
+function itemSave(id){
+  const it = S.items.find(i => i.id === id); if (!it) return;
+  const name = ($('itEN').value || '').trim().toUpperCase(), ledger = $('itEL').value;
+  if (!name) return toast('নাম খালি রাখা যাবে না', true);
+  if (S.items.some(i => i.name === name && i.id !== id)) return toast('এই নামে item আছে', true);
+  if (!ledger || !L(ledger)) return toast('ledger বাছুন', true);
+  it.name = name; it.ledger = ledger; itEdit = null; save(); toast('Item আপডেট হয়েছে ✓');
+}
+function itemDel(id){
+  const it = S.items.find(i => i.id === id); if (!it) return;
+  if (!confirm(`"${it.name}" item মুছবেন?`)) return;
+  S.items = S.items.filter(i => i.id !== id); save(); toast('Item মুছে গেছে');
+}
+// Item বাছলে তার ledger নিজে Dr/Cr-এ বসবে (expense/asset → Dr, income/liability/equity → Cr)
+function itemPicked(){
+  const it = S.items.find(i => i.id === $('vItem').value);
+  if (it && it.ledger){
+    const g = L(it.ledger).group, side = ['Income', 'Liability', 'Equity'].includes(g) ? 'vCr' : 'vDr';
+    $(side).value = it.ledger;
+    maybePick(side);
+  }
+  updPreview(); updCash();
+}
+
 /* ============ UNITS ============ */
 const DEF_UNITS = ['PCS', 'PLATE', 'KG', 'GRAM', 'LITRE', 'PERSON', 'DOZEN', 'PACKET', 'BOTTLE', 'BOX'];
 function renderUnits(){
@@ -1731,7 +1812,7 @@ function mlAdd(side){
   tr.dataset.k = k;
   tr.innerHTML = `<td><select id="ml_side_${k}" class="in" onchange="mlTot()"><option value="dr"${side === 'cr' ? '' : ' selected'}>Dr</option><option value="cr"${side === 'cr' ? ' selected' : ''}>Cr</option></select></td>
     <td><select id="ml_led_${k}" class="in" onchange="maybePick('ml_led_${k}');mlTot()">${opts}</select></td>
-    <td><input id="ml_item_${k}" class="in" placeholder="Item"></td>
+    <td><select id="ml_item_${k}" class="in">${itemOpts()}</select></td>
     <td><input id="ml_qty_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
     <td><input id="ml_rate_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
     <td><input id="ml_amt_${k}" class="in nin" inputmode="decimal" oninput="mlTot()"></td>
@@ -1748,7 +1829,7 @@ function mlRowAmt(k){
 function mlRead(){
   return [...document.querySelectorAll('#mlTbl tbody tr')].map(tr => {
     const k = tr.dataset.k;
-    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: ($('ml_item_' + k).value || '').trim().toUpperCase(),
+    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: (S.items.find(i => i.id === $('ml_item_' + k).value) || {}).name || null,
       amt: Math.round((parseAmt($('ml_amt_' + k).value) || 0) * 100) / 100};
   });
 }
@@ -2308,7 +2389,7 @@ function render(){
   fillSel($('vCr'), ledOpts('Credit account বাছুন'));
   fillSel($('lSel'), flatTree().map(({l}) => ({v:l.id, t:fullName(l.id)})));
   rebuildParents($('cParent').value);
-  renderDash(); renderLedger(); renderReports(); renderCOA(); renderCash(); renderUnits(); applyUI(); renderRibbon();
+  renderDash(); renderLedger(); renderReports(); renderCOA(); renderCash(); renderUnits(); applyUI(); renderRibbon(); renderItems();
   updRefHint(); updPreview(); syncVT(); syncMode(); refreshDriveUI();
 }
 
@@ -2368,6 +2449,7 @@ function init(){
   $('inGrid').innerHTML = buildNoteGrid('in'); $('outGrid').innerHTML = buildNoteGrid('out');
   ['vDr','vCr'].forEach(id => $(id).addEventListener('change', () => maybePick(id)));
   $('vMonth').innerHTML = MON3.map(m => `<option>${m}</option>`).join('');
+  $('vItem').addEventListener('change', itemPicked);
   $('vCat').addEventListener('change', () => applyCat(true));
   ['vQty','vRate'].forEach(id => $(id).addEventListener('input', syncFromQR));
   $('vAmt').addEventListener('blur', () => { fmtAmtField($('vAmt')); updPreview(); });
