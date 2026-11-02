@@ -292,9 +292,9 @@ details ol{padding-left:20px}
   .card .in,.card select,.card input{max-width:100%}
 }
 @media(max-width:560px){
-  /* GPU transform দিয়ে zoom-out — iPhone-এর মতো smooth (120Hz screen-এ browser frame-rate মেলায়) */
+  /* পুরো app (menu bar + page) GPU transform দিয়ে zoom-out — home ছাড়া সব page */
   @keyframes setZoom{from{transform:scale(.96);opacity:.4}to{transform:scale(.86);opacity:1}}
-  #p-settings.on,#p-dash.on{transform:scale(.86);transform-origin:top center;width:116.28%;overflow-x:clip;will-change:transform;animation:setZoom .5s cubic-bezier(.32,.72,0,1)}
+  body:not(.is-home) main.wrap{transform:scale(.86);transform-origin:top left;width:116.28%;max-width:none;will-change:transform;animation:setZoom .5s cubic-bezier(.32,.72,0,1)}
   /* সব section heading একই size — menu bar-এর মতো */
   .card h3,details.dd>summary,.grpbox>summary{font-size:12px;font-weight:600;letter-spacing:0}
   .muted{font-size:11px}
