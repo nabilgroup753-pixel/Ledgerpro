@@ -377,6 +377,10 @@ body.ui-windows .btn{border-radius:4px!important}
 .cb-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .cashsum{display:flex;flex-direction:column;gap:6px;margin:12px 0}
 .dtl-card{max-width:440px}
+.ovRow{display:flex;gap:6px;align-items:center;margin-top:8px}
+.ovRow select{flex:1.5;min-width:0}
+.ovRow input{flex:1;min-width:0}
+.ovRow .btn{flex:0 0 auto}
 .drow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(127,127,127,.15);font-size:14px}
 .drow.total{font-weight:700;border-bottom:0;margin-top:4px}
 .dh{margin:14px 0 4px;font-size:13px;opacity:.8}
@@ -494,10 +498,10 @@ body.ui-windows .btn{border-radius:4px!important}
     </div>
 
     <div class="kpis">
-      <div class="glass kpi" onclick="openDetail('cash')" style="--c:#f59e0b;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">💵</span><small>Cash in Hand</small><b id="kCash">0.00</b></div>
-      <div class="glass kpi" onclick="openDetail('bank')" style="--c:#6366f1;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">🏦</span><small>Bank Balance</small><b id="kBank">0.00</b></div>
-      <div class="glass kpi" onclick="openDetail('inc')" style="--c:#10b981;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↗</span><small>Income · <span id="kIncLbl">সময়কাল</span></small><b id="kInc">0.00</b></div>
-      <div class="glass kpi" onclick="openDetail('exp')" style="--c:#f97316;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↘</span><small>Expense · <span id="kExpLbl">সময়কাল</span></small><b id="kExp">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('cash', this)" style="--c:#f59e0b;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">💵</span><small>Cash in Hand</small><b id="kCash">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('bank', this)" style="--c:#6366f1;cursor:pointer" title="বিস্তারিত দেখুন"><span class="ic">🏦</span><small>Bank Balance</small><b id="kBank">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('inc', this)" style="--c:#10b981;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↗</span><small>Income · <span id="kIncLbl">সময়কাল</span></small><b id="kInc">0.00</b></div>
+      <div class="glass kpi" onclick="openDetail('exp', this)" style="--c:#f97316;cursor:pointer" title="sub-ledger অনুযায়ী দেখুন"><span class="ic">↘</span><small>Expense · <span id="kExpLbl">সময়কাল</span></small><b id="kExp">0.00</b></div>
     </div>
 
     <div class="glass card" id="ribbonCard">
@@ -563,13 +567,18 @@ body.ui-windows .btn{border-radius:4px!important}
         <div class="side dr">
           <div class="lbl">Debit (Dr) · কোথায় যাচ্ছে</div>
           <select id="vDr" class="in"></select>
+          <input id="vAmt" type="text" inputmode="decimal" class="in amt" placeholder="Debit amount" style="margin-top:8px">
+          <div id="drExtra"></div>
         </div>
         <div class="arrow">⇄</div>
         <div class="side cr">
           <div class="lbl">Credit (Cr) · কোথা থেকে আসছে</div>
           <select id="vCr" class="in"></select>
+          <input id="vAmtCr" type="text" inputmode="decimal" class="in amt" placeholder="Credit amount" style="margin-top:8px">
+          <div id="crExtra"></div>
         </div>
       </div>
+      <div class="muted" id="ovTot" style="font-size:13px;margin-top:8px"></div>
 
       <div class="catrow" style="display:none"><label class="fl"><span>Entry type</span><select id="vCat" class="in"><option value="OTHERS">Others (সাধারণ খরচ/আয়)</option><option value="SALARY">Salary (বেতন)</option><option value="BONUS">Bonus (বোনাস)</option></select></label></div>
       <div class="grid4">
@@ -580,7 +589,6 @@ body.ui-windows .btn{border-radius:4px!important}
         <label class="fl" id="vRateWrap"><span id="rateLblT">Rate (প্রতি একক দর)</span><input id="vRate" class="in" inputmode="decimal" placeholder="দর"></label>
       </div>
       <div class="grid2">
-        <label class="fl"><span>Amount</span><input id="vAmt" type="text" inputmode="decimal" class="in amt" placeholder="0.00"></label>
         <label class="fl"><span>Particulars / Narration</span><input id="vNar" class="in" placeholder="বিবরণ, যেমন: BEING EGG PURCHASED"></label>
       </div>
       <div class="aw" id="awords"></div>
@@ -596,15 +604,9 @@ body.ui-windows .btn{border-radius:4px!important}
       </div>
       <div class="preview" id="preview" style="margin-top:14px"></div>
 
-      <div class="mlbox hidden" id="mlBox">
-        <div class="ch"><h3>Multi-line voucher</h3><span class="muted" style="font-size:12px">একাধিক item/account — Debit মোট = Credit মোট হতে হবে</span></div>
-        <div class="tw"><table class="tb" id="mlTbl"></table></div>
-        <div class="row" style="margin-top:8px"><button class="btn g sm" onclick="mlAdd('dr')">＋ Debit line</button><button class="btn g sm" onclick="mlAdd('cr')">＋ Credit line</button></div>
-        <div class="cashsum" id="mlTot" style="margin:10px 0;font-size:14px"></div>
-        <div class="row end"><button class="btn" onclick="mlSave()">Multi-line Save</button></div>
-      </div>
+      
       <div class="row end">
-        <button class="btn g" onclick="toggleML()">📋 Multi-line</button>
+        
         <button class="btn g" onclick="clearForm()">Clear</button>
         <button class="btn" id="saveBtn" onclick="saveV()">Save Voucher</button>
       </div>
@@ -1427,6 +1429,15 @@ function fillSel(sel, opts){
   sel.value = opts.some(o => o.v === cur) ? cur : (opts[0]?.v ?? '');
 }
 const ledOpts = ph => [{v:'', t:ph}].concat(flatTree().map(({l}) => ({v:l.id, t:`${fullName(l.id)}  ·  ${l.group}`})));
+// Voucher-এর ledger dropdown-এ শুধু general (head) ledger; sub-ledger বাছতে head নিলে popup আসবে
+const vLedOpts = ph => [{v:'', t:ph}].concat(flatTree().filter(({depth}) => depth === 0).map(({l}) => ({v:l.id, t:`${l.name}  ·  ${l.group}`})))
+  .map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+// sub-ledger popup থেকে বাছা ledger dropdown-এ না থাকলে option যোগ করে দেয়
+function ensureOpt(sel, id){
+  if (!sel || !id || [...sel.options].some(o => o.value === id)) return;
+  const l = L(id); if (!l) return;
+  sel.add(new Option(`${fullName(id)}  ·  ${l.group}`, id));
+}
 function download(name, text, type){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click();
@@ -1577,7 +1588,7 @@ function syncMode(){
 function updRefHint(){ if (!S) return; $('vRef').placeholder = 'Auto → ' + nextRef(formType, $('vDate').value || today()); }
 function pickType(t){ formType = t; syncVT(); if (!editId) updRefHint(); }
 function updPreview(){
-  itemFilter();
+  itemFilter(); ovTotals();
   const d = $('vDr').value, c = $('vCr').value, a = parseAmt($('vAmt').value);
   const ok = d && c && d !== c && a > 0;
   $('awords').textContent = a > 0 ? amountWords(a) : '';
@@ -1588,7 +1599,7 @@ function updPreview(){
 function clearForm(){
   editId = null;
   $('vDate').value = today(); $('vRef').value = ''; $('vAmt').value = ''; $('vNar').value = '';
-  $('vDr').value = ''; $('vCr').value = ''; $('vFind').value = '';
+  $('vDr').value = ''; $('vCr').value = ''; $('vFind').value = ''; ovReset();
   setNotes('in', null); setNotes('out', null);
   $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog();
   $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false);
@@ -1600,7 +1611,8 @@ function loadV(id){
   if (v.unit && !S.units.includes(v.unit)){ S.units.push(v.unit); renderUnits(); }
   editId = id; formType = v.type;
   $('vDate').value = v.date; $('vRef').value = v.ref; $('vAmt').value = fmtNum(v.amt); $('vNar').value = v.nar;
-  $('vDr').value = v.dr; $('vCr').value = v.cr;
+  ensureOpt($('vDr'), v.dr); ensureOpt($('vCr'), v.cr); $('vDr').value = v.dr; $('vCr').value = v.cr;
+  ovReset(); $('vAmtCr').value = fmtNum(v.amt);
   setNotes('in', v.nin); setNotes('out', v.nout);
   $('vCat').value = v.cat || 'OTHERS'; $('vMonth').value = v.month ? v.month.split(' ')[0] : ''; applyCat(false);
   $('vQty').value = v.qty || ''; $('vRate').value = v.rate ? fmtNum(v.rate) : ''; $('vUnit').value = v.unit || ''; const mi = S.items.find(i => i.name === v.item);
@@ -1615,6 +1627,7 @@ function findV(){
   loadV(v.id);
 }
 function saveV(){
+  if (ovRowsOf('dr').length > 1 || ovRowsOf('cr').length > 1) return ovSaveMulti();
   const type = formType, date = $('vDate').value, dr = $('vDr').value, cr = $('vCr').value;
   const amt = Math.round(parseAmt($('vAmt').value) * 100) / 100;
   const nar = $('vNar').value.trim().toUpperCase() || VT[type];
@@ -1654,7 +1667,7 @@ function saveV(){
   } else {
     S.vouchers.unshift({id:uid(), type, date, dr, cr, amt, nar, ref, nin, nout, qty: qty > 0 ? qty : null, rate: rate > 0 ? rate : null, unit, item, cat: sb ? cat : null, month});
     toast('Voucher saved ✓');
-    $('vAmt').value = ''; $('vNar').value = ''; $('vRef').value = ''; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog(); $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; setNotes('in', null); setNotes('out', null); updCash();
+    $('vAmt').value = ''; ovReset(); $('vNar').value = ''; $('vRef').value = ''; $('vItem').value = ''; $('vItemTxt').value = ''; itemTxtTog(); $('vCat').value = 'OTHERS'; $('vMonth').value = ''; applyCat(false); $('vQty').value = ''; $('vRate').value = ''; $('vUnit').value = ''; setNotes('in', null); setNotes('out', null); updCash();
   }
   save();
 }
@@ -1814,8 +1827,8 @@ function itemPicked(){
   const it = S.items.find(i => i.id === $('vItem').value);
   if (it && it.ledger){
     const g = L(it.ledger).group, side = ['Income', 'Liability', 'Equity'].includes(g) ? 'vCr' : 'vDr';
-    $(side).value = it.ledger;
-    maybePick(side);
+    ensureOpt($(side), it.ledger); $(side).value = it.ledger;
+    maybePick(side); ovLedChanged(side === 'vDr' ? 'dr' : 'cr');
   }
   updPreview(); updCash();
 }
@@ -1863,31 +1876,22 @@ function mlAdd(side){
   const k = ++mlK, tb = $('mlTbl');
   if (!tb.dataset.built){
     tb.dataset.built = '1';
-    tb.innerHTML = `<thead><tr><th>Dr/Cr</th><th>Account</th><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th><th></th></tr></thead><tbody></tbody>`;
+    tb.innerHTML = `<thead><tr><th>Dr/Cr</th><th>Account</th><th class="num">Amount</th><th></th></tr></thead><tbody></tbody>`;
   }
-  const opts = ledOpts('— account বাছুন').map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
   const tr = document.createElement('tr');
   tr.dataset.k = k;
   tr.innerHTML = `<td><select id="ml_side_${k}" class="in" onchange="mlTot()"><option value="dr"${side === 'cr' ? '' : ' selected'}>Dr</option><option value="cr"${side === 'cr' ? ' selected' : ''}>Cr</option></select></td>
-    <td><select id="ml_led_${k}" class="in" onchange="maybePick('ml_led_${k}');mlTot()">${opts}</select></td>
-    <td><select id="ml_item_${k}" class="in" onchange="mlItemTog(${k})">${itemOpts()}</select><input id="ml_itxt_${k}" class="in" placeholder="Item লিখুন" style="display:none;margin-top:4px"></td>
-    <td><input id="ml_qty_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
-    <td><input id="ml_rate_${k}" class="in nin" inputmode="decimal" oninput="mlRowAmt(${k})"></td>
+    <td><select id="ml_led_${k}" class="in" onchange="maybePick('ml_led_${k}');mlTot()">${vLedOpts('— account বাছুন')}</select></td>
     <td><input id="ml_amt_${k}" class="in nin" inputmode="decimal" oninput="mlTot()"></td>
     <td><button class="btn bad sm" onclick="mlDel(${k})">✕</button></td>`;
   tb.querySelector('tbody').appendChild(tr);
   mlTot();
 }
 function mlDel(k){ const tr = document.querySelector(`#mlTbl tr[data-k="${k}"]`); if (tr) tr.remove(); mlTot(); }
-function mlRowAmt(k){
-  const q = parseAmt($('ml_qty_' + k).value), r = parseAmt($('ml_rate_' + k).value);
-  if (q > 0 && r > 0) $('ml_amt_' + k).value = fmtNum(Math.round(q * r * 100) / 100);
-  mlTot();
-}
 function mlRead(){
   return [...document.querySelectorAll('#mlTbl tbody tr')].map(tr => {
     const k = tr.dataset.k;
-    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: itemName($('ml_item_' + k).value, $('ml_itxt_' + k).value),
+    return {side: $('ml_side_' + k).value, led: $('ml_led_' + k).value, item: null,
       amt: Math.round((parseAmt($('ml_amt_' + k).value) || 0) * 100) / 100};
   });
 }
@@ -1944,11 +1948,109 @@ function vGroupHTML(v){
   </div>`;
 }
 
+/* ============ DEBIT / CREDIT LEDGER ROWS ============ */
+// Dr/Cr-এর প্রথম ledger = vDr/vCr (+ amount vAmt/vAmtCr); নিচে প্রতিটি নতুন ledger বাছলে আরেকটা ঘর আসে
+let ovK = 0;
+const ovBox = side => $(side + 'Extra');
+function ovAddRow(side){
+  const k = ++ovK, d = document.createElement('div');
+  d.className = 'ovRow'; d.dataset.s = side; d.dataset.k = k;
+  d.innerHTML = `<select id="${side}x_led_${k}" class="in" onchange="ovExtraChg(this)">${vLedOpts(side === 'dr' ? 'Debit account বাছুন' : 'Credit account বাছুন')}</select>` +
+    `<input id="${side}x_amt_${k}" type="text" inputmode="decimal" class="in amt" placeholder="0.00" oninput="ovXAmt('${side}')">` +
+    `<button class="btn bad sm" onclick="ovXDel(this)" title="সরান">✕</button>`;
+  ovBox(side).appendChild(d);
+}
+// ফাঁকা (ledger ও amount নেই) ঘর সরায়, আর শেষের ঘর ledger বাছা থাকলে নতুন ফাঁকা ঘর যোগ করে
+function ovFix(side){
+  const box = ovBox(side);
+  [...box.querySelectorAll('.ovRow')].forEach(d => {
+    const k = d.dataset.k;
+    if (!$(side + 'x_led_' + k).value && !parseAmt($(side + 'x_amt_' + k).value)) d.remove();
+  });
+  const rows = box.querySelectorAll('.ovRow'), last = rows[rows.length - 1];
+  const prevHas = last ? !!$(side + 'x_led_' + last.dataset.k).value : !!$(side === 'dr' ? 'vDr' : 'vCr').value;
+  if (prevHas) ovAddRow(side);
+}
+function ovTotal(side){
+  let t = parseAmt($(side === 'dr' ? 'vAmt' : 'vAmtCr').value) || 0;
+  ovBox(side).querySelectorAll('.ovRow').forEach(d => { t += parseAmt($(side + 'x_amt_' + d.dataset.k).value) || 0; });
+  return Math.round(t * 100) / 100;
+}
+function ovCount(side){
+  const base = $(side === 'dr' ? 'vDr' : 'vCr').value ? 1 : 0;
+  return base + [...ovBox(side).querySelectorAll('.ovRow')].filter(d => $(side + 'x_led_' + d.dataset.k).value).length;
+}
+// এক দিকের মোট amount অন্য দিক একটামাত্র ledger থাকলে সেখানে বসে যায়
+function ovSync(from){
+  const src = ovTotal(from); if (!(src > 0)) return;
+  const to = from === 'dr' ? 'cr' : 'dr';
+  if (ovCount(to) === 1) $(to === 'cr' ? 'vAmtCr' : 'vAmt').value = fmtNum(src);
+}
+function ovTotals(){
+  const el = $('ovTot'); if (!el) return;
+  const d = ovTotal('dr'), c = ovTotal('cr');
+  el.innerHTML = (d || c) ? `Debit ${money(d)} · Credit ${money(c)} · ` + (Math.abs(d - c) < 0.005 ? '<span class="ok">✓ মিলেছে</span>' : `<span style="color:#ef4444">Diff ${money(Math.abs(d - c))}</span>`) : '';
+}
+// ledger বদলালে: অন্য দিকের amount এই দিকে বসবে (একটামাত্র ledger হলে), নতুন ঘর আসবে
+function ovLedChanged(side){
+  ovFix(side); ovSync(side === 'dr' ? 'cr' : 'dr'); updPreview(); updCash();
+}
+function ovExtraChg(sel){
+  const side = sel.closest('.ovRow').dataset.s;
+  maybePick(sel.id);
+  ovLedChanged(side);
+}
+function ovXAmt(side){ ovSync(side); updPreview(); updCash(); }
+function ovXDel(btn){
+  const d = btn.closest('.ovRow'), side = d.dataset.s; d.remove();
+  ovFix(side); ovSync(side); updPreview(); updCash();
+}
+function ovReset(){
+  ovBox('dr').innerHTML = ''; ovBox('cr').innerHTML = '';
+  $('vAmtCr').value = '';
+  ovFix('dr'); ovFix('cr');
+}
+// সব ঘর (প্রথমটা সহ) — multi-ledger save-এর জন্য
+function ovRowsOf(side){
+  const out = [{led: $(side === 'dr' ? 'vDr' : 'vCr').value, amt: parseAmt($(side === 'dr' ? 'vAmt' : 'vAmtCr').value) || 0}];
+  ovBox(side).querySelectorAll('.ovRow').forEach(d => {
+    const k = d.dataset.k;
+    out.push({led: $(side + 'x_led_' + k).value, amt: parseAmt($(side + 'x_amt_' + k).value) || 0});
+  });
+  return out.filter(x => x.led || x.amt > 0);
+}
+function ovSaveMulti(){
+  const date = $('vDate').value; if (!date) return toast('তারিখ দিন', true);
+  if (editId) return toast('Multi-ledger voucher edit হয় না — delete করে আবার তুলুন', true);
+  const D = ovRowsOf('dr'), C = ovRowsOf('cr');
+  if ([...D, ...C].some(l => !l.led)) return toast('প্রতি amount-এর পাশে account বাছুন', true);
+  if ([...D, ...C].some(l => !(l.amt > 0))) return toast('প্রতি account-এর amount দিন', true);
+  if ([...D, ...C].some(l => isCashL(l.led))) return toast('Multi-ledger-এ cash account চলে না — cash entry আলাদা করে দিন', true);
+  const dT = Math.round(D.reduce((s, l) => s + l.amt, 0) * 100), cT = Math.round(C.reduce((s, l) => s + l.amt, 0) * 100);
+  if (dT !== cT) return toast(`Debit ও Credit মেলেনি (${money(dT / 100)} ≠ ${money(cT / 100)})`, true);
+  const ref = ($('vRef').value.trim().toUpperCase()) || nextRef('JV', date);
+  if (S.vouchers.some(v => v.ref.toLowerCase() === ref.toLowerCase())) return toast('এই Voucher No. আগে থেকেই আছে', true);
+  const nar = ($('vNar').value.trim().toUpperCase()) || 'JOURNAL ENTRY';
+  const grp = uid(), posts = [];
+  const Dl = D.map(l => ({...l, left: Math.round(l.amt * 100)})), Cl = C.map(l => ({...l, left: Math.round(l.amt * 100)}));
+  let i = 0, j = 0;
+  while (i < Dl.length && j < Cl.length){
+    const x = Math.min(Dl[i].left, Cl[j].left);
+    posts.push({id: uid(), type: 'JV', date, dr: Dl[i].led, cr: Cl[j].led, amt: x / 100, nar, ref, grp, item: null});
+    Dl[i].left -= x; Cl[j].left -= x;
+    if (Dl[i].left === 0) i++;
+    if (Cl[j].left === 0) j++;
+  }
+  S.vouchers.unshift(...posts);
+  save(); clearForm();
+  toast(`Voucher saved ✓ (${posts.length} টি entry)`);
+}
+
 /* ============ QUANTITY × RATE ============ */
 // Qty × Rate বসালে Amount নিজে হবে; Amount দিলে Rate নিজে হবে (Qty থাকলে)
 function syncFromQR(){
   const q = parseAmt($('vQty').value), r = parseAmt($('vRate').value);
-  if (q > 0 && r > 0){ $('vAmt').value = fmtNum(Math.round(q * r * 100) / 100); updPreview(); updCash(); }
+  if (q > 0 && r > 0){ $('vAmt').value = fmtNum(Math.round(q * r * 100) / 100); ovSync('dr'); updPreview(); updCash(); }
 }
 function syncFromAmt(){
   const q = parseAmt($('vQty').value), a = parseAmt($('vAmt').value);
@@ -2002,7 +2104,7 @@ function maybePick(which){
     ks.map(k => `<button class="btn g sub-btn" onclick="choosePick('${k.id}')">↳ ${esc(k.name)}</button>`).join('');
   $('pick').classList.remove('hidden');
 }
-function choosePick(id){ if (pickFor) $(pickFor).value = id; closePick(); updPreview(); updCash(); }
+function choosePick(id){ if (pickFor) { ensureOpt($(pickFor), id); $(pickFor).value = id; } closePick(); updPreview(); updCash(); }
 function closePick(){ $('pick').classList.add('hidden'); pickFor = null; }
 
 function bookCashTotal(){ const B = bals(null); return S.ledgers.filter(l => l.type === 'cash').reduce((s, l) => s + (B[l.id] || 0), 0); }
@@ -2076,7 +2178,7 @@ function mergeInto(src){
 }
 
 /* ============ DASHBOARD DETAIL ============ */
-function openDetail(k){
+function openDetail(k, el){
   if (!S) return;
   const B = bals(null), P = periodOf(per.kind, per.anchor);
   let title = '', html = '';
@@ -2103,7 +2205,21 @@ function openDetail(k){
     html += `<div class="drow total"><span>মোট</span><b>${money(tot)}</b></div>`;
   }
   $('dtlTitle').textContent = title; $('dtlBody').innerHTML = html;
-  $('dtl').classList.remove('hidden');
+  const dv = $('dtl'), card = dv.querySelector('.pick-card');
+  dv.classList.remove('hidden');
+  placePop(card, el);
+}
+// popup কার্ডটা যে element-এ click হয়েছে তার পাশেই বসবে (স্ক্রীনের বাইরে গেলে ভেতরে ধরে রাখে)
+function placePop(card, el){
+  const vw = innerWidth, vh = innerHeight, w = Math.min(340, vw - 16);
+  card.style.position = 'absolute'; card.style.width = w + 'px'; card.style.transform = 'none';
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (!r){ card.style.left = '50%'; card.style.top = '50%'; card.style.transform = 'translate(-50%,-50%)'; return; }
+  const h = card.offsetHeight;
+  const left = Math.min(Math.max(8, r.left), vw - w - 8);
+  let top = r.bottom + 8;
+  if (top + h > vh - 8) top = Math.max(8, r.top - h - 8);
+  card.style.left = left + 'px'; card.style.top = top + 'px';
 }
 function closeDetail(){ $('dtl').classList.add('hidden'); }
 
@@ -2445,6 +2561,7 @@ function render(){
   if (!$('vDate').value) $('vDate').value = today();
   fillSel($('vDr'), ledOpts('Debit account বাছুন'));
   fillSel($('vCr'), ledOpts('Credit account বাছুন'));
+  $('vDr').innerHTML = vLedOpts('Debit account বাছুন'); $('vCr').innerHTML = vLedOpts('Credit account বাছুন');
   fillSel($('lSel'), flatTree().map(({l}) => ({v:l.id, t:fullName(l.id)})));
   rebuildParents($('cParent').value);
   renderDash(); renderLedger(); renderReports(); renderCOA(); renderCash(); renderUnits(); applyUI(); renderRibbon(); renderItems();
@@ -2501,11 +2618,17 @@ function init(){
   }, true);
 
   ['vDr','vCr','vAmt','vNar','vDate'].forEach(id => {
-    const h = () => { if (id === 'vAmt'){ cleanAmtField($('vAmt')); syncFromAmt(); } updPreview(); updCash(); if (id === 'vDate') updRefHint(); };
+    const h = () => { if (id === 'vAmt'){ cleanAmtField($('vAmt')); syncFromAmt(); ovSync('dr'); } updPreview(); updCash(); if (id === 'vDate') updRefHint(); };
     $(id).addEventListener('input', h); $(id).addEventListener('change', h);
   });
   $('inGrid').innerHTML = buildNoteGrid('in'); $('outGrid').innerHTML = buildNoteGrid('out');
   ['vDr','vCr'].forEach(id => $(id).addEventListener('change', () => maybePick(id)));
+  $('vDr').addEventListener('change', () => ovLedChanged('dr'));
+  $('vCr').addEventListener('change', () => ovLedChanged('cr'));
+  $('vAmtCr').addEventListener('input', () => { cleanAmtField($('vAmtCr')); ovSync('cr'); updPreview(); updCash(); });
+  $('vAmtCr').addEventListener('blur', () => { fmtAmtField($('vAmtCr')); updPreview(); });
+  $('vAmtCr').addEventListener('keydown', e => { if (e.key === 'Enter') { fmtAmtField($('vAmtCr')); saveV(); } });
+  ovFix('dr'); ovFix('cr');
   $('vMonth').innerHTML = MON3.map(m => `<option>${m}</option>`).join('');
   $('vItem').addEventListener('change', itemPicked);
   $('vCat').addEventListener('change', () => applyCat(true));
